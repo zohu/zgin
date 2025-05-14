@@ -39,62 +39,31 @@ type Options struct {
 	Writer      io.Writer
 }
 
-type Option func(*Options)
-
-func WithSkipCallers(skip int) Option {
-	return func(o *Options) {
-		o.SkipCallers = skip
-	}
-}
-func WithLevel(level slog.Leveler) Option {
-	return func(o *Options) {
-		o.Level = level
-	}
-}
-func WithReplaceAttr(replace func(groups []string, attr slog.Attr) slog.Attr) Option {
-	return func(o *Options) {
-		o.ReplaceAttr = replace
-	}
-}
-func WithTimeFormat(format string) Option {
-	return func(o *Options) {
-		o.TimeFormat = format
-	}
-}
-func WithNoColor() Option {
-	return func(o *Options) {
-		o.NoColor = true
-	}
-}
-func WithWriter(w io.Writer) Option {
-	return func(o *Options) {
-		o.Writer = w
-	}
-}
-
-func NewHandler(opts ...Option) slog.Handler {
-	opt := &Options{
-		SkipCallers: 0,
-		Level:       slog.LevelInfo,
-		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+func (o *Options) Validate() {
+	o.Level = zutil.FirstTruth(o.Level, slog.LevelInfo)
+	o.TimeFormat = zutil.FirstTruth(o.TimeFormat, time.DateTime)
+	if o.ReplaceAttr == nil {
+		o.ReplaceAttr = func(groups []string, attr slog.Attr) slog.Attr {
 			return attr
-		},
-		TimeFormat: time.DateTime,
-		NoColor:    false,
-		Writer:     os.Stdout,
+		}
 	}
-	for _, o := range opts {
-		o(opt)
+	if o.Writer == nil {
+		o.Writer = os.Stdout
 	}
+}
+
+func NewHandler(options *Options) slog.Handler {
+	options = zutil.FirstTruth(options, &Options{})
+	options.Validate()
 
 	h := new(handler)
-	h.level = opt.Level
-	h.timeFormat = opt.TimeFormat
-	h.skipCallers = opt.SkipCallers
-	h.replaceAttr = opt.ReplaceAttr
-	h.timeFormat = opt.TimeFormat
-	h.noColor = opt.NoColor
-	h.writer = opt.Writer
+	h.level = options.Level
+	h.timeFormat = options.TimeFormat
+	h.skipCallers = options.SkipCallers
+	h.replaceAttr = options.ReplaceAttr
+	h.timeFormat = options.TimeFormat
+	h.noColor = options.NoColor
+	h.writer = options.Writer
 	return h
 }
 

@@ -8,9 +8,9 @@ type XLogger struct {
 	l *Logger
 }
 
-func NewXLogger(opts ...Option) *XLogger {
+func NewXLogger(options *Options) *XLogger {
 	return &XLogger{
-		l: NewZLogger(opts...),
+		l: NewZLogger(options),
 	}
 }
 

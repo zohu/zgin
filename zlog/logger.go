@@ -57,9 +57,9 @@ type Logger struct {
 	s *slog.Logger
 }
 
-func NewZLogger(opts ...Option) *Logger {
+func NewZLogger(options *Options) *Logger {
 	return &Logger{
-		s: slog.New(NewHandler(opts...)),
+		s: slog.New(NewHandler(options)),
 	}
 }
 

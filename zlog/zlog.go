@@ -2,15 +2,14 @@ package zlog
 
 import "log/slog"
 
-var zlog = NewZLogger(
-	WithLevel(slog.LevelDebug),
-	WithSkipCallers(1),
-)
+var zlog = NewZLogger(&Options{
+	Level:       slog.LevelDebug,
+	SkipCallers: 1,
+})
 
-func WithOptions(opts ...Option) {
-	zlog = NewZLogger(opts...)
+func WithOptions(options *Options) {
+	zlog = NewZLogger(options)
 }
-
 func Debugf(format string, args ...any) {
 	zlog.Debugf(format, args...)
 }
