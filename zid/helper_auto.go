@@ -4,20 +4,19 @@ import (
 	"context"
 	"github.com/zohu/zgin/zch"
 	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/zutil"
 	"time"
 )
 
-func AutoWorkerId(r *zch.Redis, opts ...Option) {
-	options := new(Options)
-	for _, opt := range opts {
-		opt(options)
-	}
+func AutoWorkerId(r *zch.Redis, options *Options) {
+	options = zutil.FirstTruth(options, new(Options))
 	options.Validate()
+
 	ctx := context.TODO()
 	options.WorkerId = findIdx(ctx, r, options, 0)
 
 	singletonMutex.Lock()
-	idGenerator = NewDefaultIdGenerator(opts...)
+	idGenerator = NewDefaultIdGenerator(options)
 	singletonMutex.Unlock()
 
 	go alive(ctx, r, options.prefix(options.WorkerId))

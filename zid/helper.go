@@ -11,7 +11,7 @@ var idGenerator *DefaultIdGenerator
 
 func init() {
 	singletonMutex.Lock()
-	idGenerator = NewDefaultIdGenerator()
+	idGenerator = NewDefaultIdGenerator(nil)
 	singletonMutex.Unlock()
 }
 

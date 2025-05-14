@@ -1,6 +1,7 @@
 package zid
 
 import (
+	"github.com/zohu/zgin/zutil"
 	"time"
 )
 
@@ -9,11 +10,8 @@ type DefaultIdGenerator struct {
 	SnowWorker ISnowWorker
 }
 
-func NewDefaultIdGenerator(opts ...Option) *DefaultIdGenerator {
-	options := new(Options)
-	for _, opt := range opts {
-		opt(options)
-	}
+func NewDefaultIdGenerator(options *Options) *DefaultIdGenerator {
+	options = zutil.FirstTruth(options, new(Options))
 	options.Validate()
 
 	var snowWorker ISnowWorker

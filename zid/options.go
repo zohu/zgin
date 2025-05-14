@@ -26,62 +26,15 @@ type Options struct {
 	TopOverCostCount   uint32 // 最大漂移次数（含），默认2000，推荐范围500-10000（与计算能力有关）
 }
 
-type Option func(*Options)
-
-func WithMethod(method uint16) Option {
-	return func(o *Options) {
-		o.Method = method
-	}
-}
-func WithBaseTime(baseTime int64) Option {
-	return func(o *Options) {
-		o.BaseTime = baseTime
-	}
-}
-func WithWorkerId(workerId uint16) Option {
-	return func(o *Options) {
-		o.WorkerId = workerId
-	}
-}
-func WithWorkerIdAutoPrefix(workerIdAutoPrefix string) Option {
-	return func(o *Options) {
-		o.WorkerIdAutoPrefix = workerIdAutoPrefix
-	}
-}
-func WithWorkerIdBitLength(workerIdBitLength byte) Option {
-	return func(o *Options) {
-		o.WorkerIdBitLength = workerIdBitLength
-	}
-}
-func WithSeqBitLength(seqBitLength byte) Option {
-	return func(o *Options) {
-		o.SeqBitLength = seqBitLength
-	}
-}
-func WithMaxSeqNumber(maxSeqNumber uint32) Option {
-	return func(o *Options) {
-		o.MaxSeqNumber = maxSeqNumber
-	}
-}
-func WithMinSeqNumber(minSeqNumber uint32) Option {
-	return func(o *Options) {
-		o.MinSeqNumber = minSeqNumber
-	}
-}
-func WithTopOverCostCount(topOverCostCount uint32) Option {
-	return func(o *Options) {
-		o.TopOverCostCount = topOverCostCount
-	}
-}
-
 func (o *Options) Validate() {
 	o.Method = zutil.FirstTruth(o.Method, 1)
 	o.BaseTime = zutil.FirstTruth(o.BaseTime, 1735660800000)
+	o.WorkerIdAutoPrefix = zutil.FirstTruth(o.WorkerIdAutoPrefix, "zid")
 	o.WorkerIdBitLength = zutil.FirstTruth(o.WorkerIdBitLength, 6)
 	o.SeqBitLength = zutil.FirstTruth(o.SeqBitLength, 6)
+	o.MaxSeqNumber = zutil.FirstTruth(o.MaxSeqNumber, 0)
 	o.MinSeqNumber = zutil.FirstTruth(o.MinSeqNumber, 5)
 	o.TopOverCostCount = zutil.FirstTruth(o.TopOverCostCount, 2000)
-	o.WorkerIdAutoPrefix = zutil.FirstTruth(o.WorkerIdAutoPrefix, "zid")
 
 	if o.BaseTime < 1735660800000 || o.BaseTime > time.Now().UnixNano()/1e6 {
 		zlog.Fatalf("BaseTime range:[2025-01-01 ~ now]")
