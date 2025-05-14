@@ -31,11 +31,11 @@ const (
 )
 
 type Options struct {
-	SkipCallers int
-	Level       slog.Leveler
+	SkipCallers int          `yaml:"skip_callers"`
+	Level       slog.Leveler `yaml:"level"`
+	TimeFormat  string       `yaml:"time_format"`
+	NoColor     bool         `yaml:"no_color"`
 	ReplaceAttr func(groups []string, attr slog.Attr) slog.Attr
-	TimeFormat  string
-	NoColor     bool
 	Writer      io.Writer
 }
 

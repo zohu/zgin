@@ -18,14 +18,12 @@ type Logger struct {
 }
 
 func NewLogger(o *Options) *Logger {
-	opts := []zlog.Option{
-		zlog.WithSkipCallers(-1), // 关闭调用栈打印
-	}
+	options := &zlog.Options{SkipCallers: -1}
 	if o.Debug != nil && *o.Debug {
-		opts = append(opts, zlog.WithLevel(slog.LevelDebug))
+		options.Level = slog.LevelDebug
 	}
 	l := &Logger{
-		Logger:               zlog.NewZLogger(opts...),
+		Logger:               zlog.NewZLogger(options),
 		ignoreRecordNotFound: o.LogIgnoreNotFound == "yes",
 		logSlow:              o.LogSlow,
 	}

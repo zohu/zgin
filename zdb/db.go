@@ -7,7 +7,6 @@ import (
 	"github.com/zohu/zgin/zmap"
 	"github.com/zohu/zgin/zutil"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -15,20 +14,12 @@ var (
 	o *Options
 )
 
-func New(opts ...Option) {
-	o = &Options{
-		Config:            "sslmode=disable TimeZone=Asia/Shanghai",
-		MaxIdle:           10,
-		MaxAlive:          100,
-		MaxAliveLife:      time.Hour,
-		LogSlow:           time.Second * 5,
-		LogIgnoreNotFound: "yes",
-		Debug:             zutil.Ptr(zutil.IsDebug()),
+func New(options *Options) {
+	o = zutil.FirstTruth(options, new(Options))
+	if err := o.Validate(); err != nil {
+		zlog.Fatalf("validate options error: %v", err)
+		return
 	}
-	for _, opt := range opts {
-		opt(o)
-	}
-	o.Validate()
 
 	db := NewDB(context.Background())
 	// init extension
