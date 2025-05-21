@@ -70,6 +70,10 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 	options = zutil.FirstTruth(options, &LoggerOptions{})
 	options.Validate()
 	return func(c *gin.Context) {
+		if c.Request.URL.Path == "/health" {
+			c.Next()
+			return
+		}
 		for _, ignore := range options.Ignore {
 			if strings.HasPrefix(c.Request.URL.Path[1:], ignore) {
 				c.Next()

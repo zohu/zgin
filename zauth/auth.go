@@ -43,6 +43,10 @@ func New(opts *Options) gin.HandlerFunc {
 	options = opts
 	return func(c *gin.Context) {
 		// 路径校验
+		if c.Request.URL.Path == "/health" {
+			c.Next()
+			return
+		}
 		if options.PathSkip(c.Request.URL.Path) {
 			c.Next()
 			return
