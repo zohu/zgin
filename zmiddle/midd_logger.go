@@ -100,16 +100,20 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 
 		// body
 		{
-			body, _ := c.GetRawData()
-			c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
-			if len(body) > 0 && body[0] == 123 && body[len(body)-1] == 125 {
-				dst := zbuff.New()
-				defer dst.Free()
-				_ = json.Compact(dst.Buffer, body)
-				body = dst.Bytes()
-			}
-			if len(body) > 0 {
-				item.Body = string(zutil.When(len(body) > options.MaxBody, body[:options.MaxBody], body))
+			if c.ContentType() == gin.MIMEMultipartPOSTForm {
+				item.Body = "upload file..."
+			} else {
+				body, _ := c.GetRawData()
+				c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+				if len(body) > 0 && body[0] == 123 && body[len(body)-1] == 125 {
+					dst := zbuff.New()
+					defer dst.Free()
+					_ = json.Compact(dst.Buffer, body)
+					body = dst.Bytes()
+				}
+				if len(body) > 0 {
+					item.Body = string(zutil.When(len(body) > options.MaxBody, body[:options.MaxBody], body))
+				}
 			}
 		}
 
