@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/zutil"
 	"net"
 	"strings"
 )
@@ -12,12 +14,12 @@ type Redis struct {
 	redis.UniversalClient
 }
 
-func NewRedis(opts ...Option) *Redis {
-	options := new(Options)
-	for _, opt := range opts {
-		opt(options)
+func NewRedis(options *Options) *Redis {
+	options = zutil.FirstTruth(options, &Options{})
+	if err := options.Validate(); err != nil {
+		zlog.Fatalf("options is invalid: %v", err)
+		return nil
 	}
-	options.Validate()
 	client := redis.NewUniversalClient(&redis.UniversalOptions{
 		Addrs:      options.Addrs,
 		ClientName: options.ClientName,

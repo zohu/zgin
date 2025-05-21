@@ -3,6 +3,7 @@ package zgin
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
@@ -21,24 +22,14 @@ func init() {
 }
 
 type Options struct {
-	Addr   string
-	Domain string
+	Addr   string `yaml:"addr" validate:"required" note:"监听地址"`
+	Domain string `yaml:"domain" validate:"required" note:"域名"`
 }
 
 func (o *Options) Validate() {
 	o.Addr = zutil.FirstTruth(o.Addr, ":8080")
-}
-
-type Option func(*Options)
-
-func WithAddr(addr string) Option {
-	return func(o *Options) {
-		o.Addr = addr
-	}
-}
-func WithDomain(domain string) Option {
-	return func(o *Options) {
-		o.Domain = domain
+	if err := validator.New().Struct(o); err != nil {
+		zlog.Fatalf("validate options failed: %v", err)
 	}
 }
 
@@ -51,11 +42,8 @@ type App struct {
 	shutdown []func()
 }
 
-func NewApp(opts ...Option) *App {
-	options := new(Options)
-	for _, opt := range opts {
-		opt(options)
-	}
+func NewApp(options *Options) *App {
+	options = zutil.FirstTruth(options, &Options{})
 	options.Validate()
 
 	return &App{
@@ -74,7 +62,10 @@ func (app *App) WithShutdown(shutdown ...func()) *App {
 	app.shutdown = append(app.shutdown, shutdown...)
 	return app
 }
-func (app *App) WithGin(e *gin.Engine) *App {
+func (app *App) WithGin(e *gin.Engine, midds ...gin.HandlerFunc) *App {
+	if len(midds) > 0 {
+		e.Use(midds...)
+	}
 	app.tcp = e
 	return app
 }
@@ -84,22 +75,20 @@ func (app *App) WithGrpc(h http.Handler) *App {
 }
 
 func (app *App) Listen() {
+	if app.tcp == nil && app.grpc == nil {
+		zlog.Fatalf("tcp and grpc must set one")
+	}
+
 	app.server.Handler = h2c.NewHandler(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.ProtoMajor == 2 && app.grpc != nil && strings.HasPrefix(r.Header.Get("Content-Type"), "application/grpc") {
+			if app.grpc != nil && r.ProtoMajor == 2 && strings.HasPrefix(r.Header.Get("Content-Type"), "application/grpc") {
 				app.grpc.ServeHTTP(w, r)
-			} else if app.tcp != nil {
-				app.tcp.ServeHTTP(w, r)
 			} else {
-				zlog.Fatalf("tcp and grpc must set one")
+				app.tcp.ServeHTTP(w, r)
 			}
 		}),
 		&http2.Server{},
 	)
-
-	if app.tcp == nil && app.grpc == nil {
-		zlog.Fatalf("tcp and grpc must set one")
-	}
 
 	// 初始化依赖
 	for _, f := range app.preload {

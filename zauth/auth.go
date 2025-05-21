@@ -17,6 +17,7 @@ import (
 
 type Userinfo interface {
 	Userid() string
+	UserName() string
 	Validate() error
 }
 
@@ -34,12 +35,12 @@ const (
 
 var options *Options
 
-func New(opts ...Option) gin.HandlerFunc {
-	options = new(Options)
-	for _, opt := range opts {
-		opt(options)
+func New(opts *Options) gin.HandlerFunc {
+	opts = zutil.FirstTruth(opts, &Options{})
+	if err := opts.Validate(); err != nil {
+		zlog.Fatalf("options is invalid: %v", err)
 	}
-	options.Validate()
+	options = opts
 	return func(c *gin.Context) {
 		// 路径校验
 		if options.PathSkip(strings.TrimPrefix(c.Request.URL.Path, "/")) {

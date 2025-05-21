@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding"
 	"fmt"
+	"github.com/zohu/zgin/zbuff"
 	"github.com/zohu/zgin/zutil"
 	"io"
 	"log/slog"
@@ -86,7 +87,7 @@ func (h *handler) Enabled(ctx context.Context, level slog.Level) bool {
 	return level >= h.level.Level()
 }
 func (h *handler) Handle(_ context.Context, r slog.Record) error {
-	buf := zutil.NewBuffer()
+	buf := zbuff.New()
 	defer buf.Free()
 
 	rep := h.replaceAttr
@@ -96,11 +97,11 @@ func (h *handler) Handle(_ context.Context, r slog.Record) error {
 		h.color(buf, ANSITime)
 		val := r.Time.Round(0) // strip monotonic to match Attr behavior
 		if rep == nil {
-			*buf = r.Time.AppendFormat(*buf, h.timeFormat)
+			buf.WriteString(r.Time.Format(h.timeFormat))
 			_ = buf.WriteByte(' ')
 		} else if a := rep(nil /* groups */, slog.Time(slog.TimeKey, val)); a.Key != "" {
 			if a.Value.Kind() == slog.KindTime {
-				*buf = a.Value.Time().AppendFormat(*buf, h.timeFormat)
+				buf.WriteString(a.Value.Time().Format(h.timeFormat))
 			} else {
 				h.appendValue(buf, a.Value, false)
 			}
@@ -164,15 +165,18 @@ func (h *handler) Handle(_ context.Context, r slog.Record) error {
 		return true
 	})
 
-	if len(*buf) == 0 {
+	if buf.Len() == 0 {
 		return nil
 	}
-	(*buf)[len(*buf)-1] = '\n' // replace last space with newline
+
+	// replace last space with newline
+	buf.Truncate(buf.Len() - 1)
+	buf.WriteByte('\n')
 
 	h.Lock()
 	defer h.Unlock()
 
-	_, err := h.writer.Write(*buf)
+	_, err := h.writer.Write(buf.Bytes())
 	return err
 }
 func (h *handler) WithAttrs(attrs []slog.Attr) slog.Handler {
@@ -181,14 +185,14 @@ func (h *handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	}
 	h2 := h.clone()
 
-	buf := zutil.NewBuffer()
+	buf := zbuff.New()
 	defer buf.Free()
 
 	// write attributes to buffer
 	for _, attr := range attrs {
 		h.appendAttr(buf, attr, h.groupPrefix, h.groups)
 	}
-	h2.attrsPrefix = h.attrsPrefix + string(*buf)
+	h2.attrsPrefix = h.attrsPrefix + buf.String()
 	return h2
 }
 func (h *handler) WithGroup(name string) slog.Handler {
@@ -200,19 +204,19 @@ func (h *handler) WithGroup(name string) slog.Handler {
 	h2.groups = append(h2.groups, name)
 	return h2
 }
-func appendLevelDelta(buf *zutil.Buffer, delta slog.Level) {
+func appendLevelDelta(buf *zbuff.Buffer, delta slog.Level) {
 	if delta == 0 {
 		return
 	} else if delta > 0 {
 		_ = buf.WriteByte('+')
 	}
-	*buf = strconv.AppendInt(*buf, int64(delta), 10)
+	buf.WriteString(strconv.Itoa(int(delta)))
 }
-func (h *handler) appendKey(buf *zutil.Buffer, key, groups string) {
+func (h *handler) appendKey(buf *zbuff.Buffer, key, groups string) {
 	h.appendString(buf, groups+key, true)
 	_ = buf.WriteByte('=')
 }
-func (h *handler) appendLevel(buf *zutil.Buffer, level slog.Level) {
+func (h *handler) appendLevel(buf *zbuff.Buffer, level slog.Level) {
 	switch {
 	case level < slog.LevelInfo:
 		_, _ = buf.WriteString("DBG")
@@ -228,18 +232,18 @@ func (h *handler) appendLevel(buf *zutil.Buffer, level slog.Level) {
 		appendLevelDelta(buf, level-slog.LevelError)
 	}
 }
-func (h *handler) appendValue(buf *zutil.Buffer, v slog.Value, quote bool) {
+func (h *handler) appendValue(buf *zbuff.Buffer, v slog.Value, quote bool) {
 	switch v.Kind() {
 	case slog.KindString:
 		h.appendString(buf, v.String(), quote)
 	case slog.KindInt64:
-		*buf = strconv.AppendInt(*buf, v.Int64(), 10)
+		buf.WriteString(strconv.FormatInt(v.Int64(), 10))
 	case slog.KindUint64:
-		*buf = strconv.AppendUint(*buf, v.Uint64(), 10)
+		buf.WriteString(strconv.FormatUint(v.Uint64(), 10))
 	case slog.KindFloat64:
-		*buf = strconv.AppendFloat(*buf, v.Float64(), 'g', -1, 64)
+		buf.WriteString(strconv.FormatFloat(v.Float64(), 'g', -1, 64))
 	case slog.KindBool:
-		*buf = strconv.AppendBool(*buf, v.Bool())
+		buf.WriteString(strconv.FormatBool(v.Bool()))
 	case slog.KindDuration:
 		h.appendString(buf, v.Duration().String(), quote)
 	case slog.KindTime:
@@ -262,7 +266,7 @@ func (h *handler) appendValue(buf *zutil.Buffer, v slog.Value, quote bool) {
 	default:
 	}
 }
-func (h *handler) appendAttr(buf *zutil.Buffer, attr slog.Attr, groupsPrefix string, groups []string) {
+func (h *handler) appendAttr(buf *zbuff.Buffer, attr slog.Attr, groupsPrefix string, groups []string) {
 	attr.Value = attr.Value.Resolve()
 	if rep := h.replaceAttr; rep != nil && attr.Value.Kind() != slog.KindGroup {
 		attr = rep(groups, attr)
@@ -289,13 +293,13 @@ func (h *handler) appendAttr(buf *zutil.Buffer, attr slog.Attr, groupsPrefix str
 	_ = buf.WriteByte(' ')
 }
 
-func (h *handler) color(buf *zutil.Buffer, ansi string) {
+func (h *handler) color(buf *zbuff.Buffer, ansi string) {
 	if h.noColor {
 		return
 	}
 	_, _ = buf.WriteString(ansi)
 }
-func (h *handler) colorLevel(buf *zutil.Buffer, level slog.Level) {
+func (h *handler) colorLevel(buf *zbuff.Buffer, level slog.Level) {
 	if h.noColor {
 		return
 	}
@@ -312,22 +316,24 @@ func (h *handler) colorLevel(buf *zutil.Buffer, level slog.Level) {
 		_, _ = buf.WriteString(ANSIDebug)
 	}
 }
-func (h *handler) colorEnd(buf *zutil.Buffer) {
+func (h *handler) colorEnd(buf *zbuff.Buffer) {
 	if h.noColor {
 		return
 	}
 	_, _ = buf.WriteString(ANSIReset)
 }
 
-func (h *handler) appendSource(buf *zutil.Buffer, src *slog.Source) {
+func (h *handler) appendSource(buf *zbuff.Buffer, src *slog.Source) {
 	dir, file := filepath.Split(src.File)
 	_, _ = buf.WriteString(filepath.Join(filepath.Base(dir), file))
 	_ = buf.WriteByte(':')
 	_, _ = buf.WriteString(strconv.Itoa(src.Line))
 }
-func (h *handler) appendString(buf *zutil.Buffer, s string, quote bool) {
+func (h *handler) appendString(buf *zbuff.Buffer, s string, quote bool) {
 	if quote && h.needsQuote(s) {
-		*buf = strconv.AppendQuote(*buf, s)
+		buf.WriteByte('"')
+		buf.WriteString(s)
+		buf.WriteByte('"')
 	} else {
 		_, _ = buf.WriteString(s)
 	}

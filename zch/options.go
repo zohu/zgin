@@ -1,68 +1,25 @@
 package zch
 
 import (
-	"github.com/zohu/zgin/zlog"
+	"github.com/go-playground/validator/v10"
 	"github.com/zohu/zgin/zutil"
 	"time"
 )
 
 type Options struct {
-	Expiration    time.Duration
-	CleanInterval time.Duration
-	Addrs         []string
-	Database      int
-	Password      string
-	Prefix        string
-	ClientName    string
+	Expiration    time.Duration `yaml:"expiration"`
+	CleanInterval time.Duration `yaml:"clean_interval"`
+	Addrs         []string      `validate:"required" yaml:"addrs"`
+	Database      int           `yaml:"database"`
+	Password      string        `yaml:"password"`
+	Prefix        string        `yaml:"prefix"`
+	ClientName    string        `yaml:"client_name"`
 }
 
-type Option func(*Options)
-
-func WithExpiration(expiration time.Duration) Option {
-	return func(opts *Options) {
-		opts.Expiration = expiration
-	}
-}
-func WithCleanInterval(cleanInterval time.Duration) Option {
-	return func(opts *Options) {
-		opts.CleanInterval = cleanInterval
-	}
-}
-func WithAddrs(addrs []string) Option {
-	return func(opts *Options) {
-		opts.Addrs = addrs
-	}
-}
-func WithDatabase(database int) Option {
-	return func(opts *Options) {
-		opts.Database = database
-	}
-}
-func WithPassword(password string) Option {
-	return func(opts *Options) {
-		opts.Password = password
-	}
-}
-func WithPrefix(prefix string) Option {
-	return func(opts *Options) {
-		opts.Prefix = prefix
-	}
-}
-func WithClientName(clientName string) Option {
-	return func(opts *Options) {
-		opts.ClientName = clientName
-	}
-}
-
-func (o *Options) Validate() {
-	if len(o.Addrs) == 0 {
-		zlog.Fatalf("addrs is empty")
-	}
-	if o.Expiration == 0 {
-		o.Expiration = time.Hour
-	}
-	if o.CleanInterval == 0 {
-		o.CleanInterval = time.Minute * 5
-	}
+func (o *Options) Validate() error {
+	o.Expiration = zutil.FirstTruth(o.Expiration, time.Hour)
+	o.CleanInterval = zutil.FirstTruth(o.CleanInterval, time.Minute*5)
+	o.Database = zutil.FirstTruth(o.Database, 0)
 	o.ClientName = zutil.FirstTruth(o.ClientName, "zch")
+	return validator.New().Struct(o)
 }

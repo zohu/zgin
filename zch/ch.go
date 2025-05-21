@@ -3,6 +3,7 @@ package zch
 import (
 	"context"
 	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/zutil"
 	"time"
 )
 
@@ -13,16 +14,16 @@ type L2 struct {
 
 var l2 *L2
 
-func NewL2(opts ...Option) *L2 {
-	options := new(Options)
-	for _, opt := range opts {
-		opt(options)
+func NewL2(options *Options) *L2 {
+	options = zutil.FirstTruth(options, &Options{})
+	if err := options.Validate(); err != nil {
+		zlog.Fatalf("options is invalid: %v", err)
+		return nil
 	}
-	options.Validate()
 	if l2 == nil {
 		l2 = &L2{
 			m: NewMemory(options.Expiration, options.CleanInterval, options.Prefix),
-			r: NewRedis(opts...),
+			r: NewRedis(options),
 		}
 	}
 	zlog.Infof("zch init success!")

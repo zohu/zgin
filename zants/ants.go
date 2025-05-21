@@ -1,34 +1,21 @@
 package zants
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/panjf2000/ants/v2"
 	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/zutil"
 )
 
 type Options struct {
-	MultiSize int
-	PoolSize  int
-}
-type Option func(*Options)
-
-// WithMultiSize
-// @Description: 线程池数量
-// @param multiSize
-// @return Option
-func WithMultiSize(multiSize int) Option {
-	return func(opts *Options) {
-		opts.MultiSize = multiSize
-	}
+	MultiSize int `yaml:"multi_size" note:"池子总量"`
+	PoolSize  int `yaml:"pool_size" note:"每个池子的大小"`
 }
 
-// WithPoolSize
-// @Description: 每池线程数量
-// @param poolSize
-// @return Option
-func WithPoolSize(poolSize int) Option {
-	return func(opts *Options) {
-		opts.PoolSize = poolSize
-	}
+func (o *Options) Validate() error {
+	o.MultiSize = zutil.FirstTruth(o.MultiSize, 1)
+	o.PoolSize = zutil.FirstTruth(o.PoolSize, 10)
+	return validator.New().Struct(o)
 }
 
 type PoolStatus struct {
@@ -40,13 +27,10 @@ type PoolStatus struct {
 
 var multiPool *ants.MultiPool
 
-func New(opts ...Option) {
-	options := &Options{
-		MultiSize: 1,
-		PoolSize:  10,
-	}
-	for _, opt := range opts {
-		opt(options)
+func New(options *Options) {
+	options = zutil.FirstTruth(options, &Options{})
+	if err := options.Validate(); err != nil {
+		zlog.Fatalf("options is invalid: %v", err)
 	}
 	p, err := ants.NewMultiPool(options.MultiSize, options.PoolSize, ants.LeastTasks, ants.WithLogger(zlog.NewZLogger(nil)))
 	if err != nil {
