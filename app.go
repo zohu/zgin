@@ -63,6 +63,14 @@ func (app *App) WithShutdown(shutdown ...func()) *App {
 	return app
 }
 func (app *App) WithGin(e *gin.Engine, midds ...gin.HandlerFunc) *App {
+	e.Use(func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				zlog.Errorf("server panic: %v", err)
+			}
+		}()
+		c.Next()
+	})
 	if len(midds) > 0 {
 		e.Use(midds...)
 	}

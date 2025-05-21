@@ -3,7 +3,7 @@ package zlog
 import "log/slog"
 
 var zlog = NewZLogger(&Options{
-	Level:       slog.LevelDebug,
+	Level:       slog.LevelInfo,
 	SkipCallers: 1,
 })
 

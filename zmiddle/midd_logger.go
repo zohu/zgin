@@ -67,6 +67,7 @@ func (l *LoggerItem) Print() {
 }
 
 func NewLogger(options *LoggerOptions) gin.HandlerFunc {
+	options = zutil.FirstTruth(options, &LoggerOptions{})
 	options.Validate()
 	return func(c *gin.Context) {
 		for _, ignore := range options.Ignore {

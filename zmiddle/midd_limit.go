@@ -26,6 +26,8 @@ func (o *LimitOptions) Validate() {
 
 func NewLimit(options *LimitOptions) gin.HandlerFunc {
 	zlog.Infof("middleware limit enabled")
+	options = zutil.FirstTruth(options, &LimitOptions{})
+	options.Validate()
 
 	lmt := tollbooth.NewLimiter(options.Rate, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Minute})
 	lmt.SetIPLookups(options.RateLookup)

@@ -32,6 +32,8 @@ func (w bodyWriter) Write(b []byte) (int, error) {
 
 func NewTimeout(options *TimeoutOptions) gin.HandlerFunc {
 	zlog.Infof("middleware timeout enabled")
+	options = zutil.FirstTruth(options, &TimeoutOptions{})
+	options.Validate()
 
 	return func(c *gin.Context) {
 		for _, exclude := range options.Exclude {
