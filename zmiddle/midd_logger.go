@@ -1,20 +1,23 @@
 package zmiddle
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin/zauth"
 	"github.com/zohu/zgin/zbuff"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 )
 
 type LoggerOptions struct {
-	MaxBody int64    `yaml:"max_body"`
-	MaxData int64    `yaml:"max_data"`
+	MaxBody int      `yaml:"max_body"`
+	MaxData int      `yaml:"max_data"`
 	Ignore  []string `yaml:"ignore"`
 }
 
@@ -55,7 +58,7 @@ func (l *LoggerItem) Print() {
 	_, _ = buf.WriteStringIf(l.Query != "", fmt.Sprintf("%s ", l.Query))
 	_, _ = buf.WriteStringIf(l.Body != "", fmt.Sprintf("%s ", l.Body))
 	_, _ = buf.WriteStringIf(l.Data != "", fmt.Sprintf(">>> %s", l.Data))
-	
+
 	if l.Status == http.StatusOK {
 		zlog.Infof(buf.String())
 	} else {
@@ -81,7 +84,7 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 			Query:     c.Request.URL.Query().Encode(),
 		}
 
-		if u, err := zauth.Auth(c); err != nil {
+		if u, _ := zauth.Auth(c); u != nil {
 			item.Userid, item.Username = u.Userid(), u.UserName()
 		}
 
@@ -90,15 +93,40 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 		blw := &bodyWriter{body: buf, ResponseWriter: c.Writer}
 		c.Writer = blw
 
+		// body
+		{
+			body, _ := c.GetRawData()
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+			if len(body) > 0 && body[0] == 123 && body[len(body)-1] == 125 {
+				dst := zbuff.New()
+				defer dst.Free()
+				_ = json.Compact(dst.Buffer, body)
+				body = dst.Bytes()
+			}
+			if len(body) > 0 {
+				item.Body = string(zutil.When(len(body) > options.MaxBody, body[:options.MaxBody], body))
+			}
+		}
+
 		c.Next()
+
+		// data
+		{
+			data := blw.body.Bytes()
+			if len(data) > 0 && data[0] == 123 && data[len(data)-1] == 125 {
+				dst := zbuff.New()
+				defer dst.Free()
+				_ = json.Compact(dst.Buffer, data)
+				data = dst.Bytes()
+			}
+			if len(data) > 0 {
+				item.Data = string(zutil.When(len(data) > options.MaxData, data[:options.MaxData], data))
+			}
+		}
 
 		item.Status = c.Writer.Status()
 		item.Latency = time.Since(start).Milliseconds()
 
 		item.Print()
 	}
-}
-
-func formatBody(c *gin.Context) []byte {
-	return nil
 }
