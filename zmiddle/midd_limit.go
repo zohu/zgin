@@ -13,13 +13,13 @@ import (
 )
 
 type LimitOptions struct {
-	BodySize   int      `yaml:"body_size"`
-	Rate       float64  `yaml:"rate"`
+	BodySize   int      `yaml:"body_size" note:"MB"`
+	Rate       float64  `yaml:"rate" note:"every minute"`
 	RateLookup []string `yaml:"rate_lookup"`
 }
 
 func (o *LimitOptions) Validate() {
-	o.BodySize = zutil.FirstTruth(o.BodySize, 1024*1024*10)
+	o.BodySize = zutil.FirstTruth(o.BodySize, 2)
 	o.Rate = zutil.FirstTruth(o.Rate, 9999)
 	o.RateLookup = append([]string{"Remote-Addr", "X-Forwarded-For", "X-Real-IP"}, o.RateLookup...)
 }
@@ -40,7 +40,7 @@ func NewLimit(options *LimitOptions) gin.HandlerFunc {
 		c.Request.Body = &limitBody{
 			ctx:       c,
 			r:         c.Request.Body,
-			remaining: options.BodySize,
+			remaining: options.BodySize * 1024 * 1024,
 		}
 		c.Next()
 	}

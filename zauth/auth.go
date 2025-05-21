@@ -43,9 +43,15 @@ func New(opts *Options) gin.HandlerFunc {
 	options = opts
 	return func(c *gin.Context) {
 		// 路径校验
-		if options.PathSkip(strings.TrimPrefix(c.Request.URL.Path, "/")) {
+		if options.PathSkip(c.Request.URL.Path) {
 			c.Next()
 			return
+		}
+		for _, ignore := range options.WhiteList {
+			if strings.HasPrefix(c.Request.URL.Path[1:], ignore) {
+				c.Next()
+				return
+			}
 		}
 		// 校验登录态
 		token := Token(c)
