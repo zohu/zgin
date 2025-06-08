@@ -67,6 +67,7 @@ func (l *LoggerItem) Print() {
 }
 
 func NewLogger(options *LoggerOptions) gin.HandlerFunc {
+	zlog.Infof("middleware api logger enabled")
 	options = zutil.FirstTruth(options, &LoggerOptions{})
 	options.Validate()
 	return func(c *gin.Context) {
@@ -105,14 +106,17 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 			} else {
 				body, _ := c.GetRawData()
 				c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
-				if len(body) > 0 && body[0] == 123 && body[len(body)-1] == 125 {
-					dst := zbuff.New()
-					defer dst.Free()
-					_ = json.Compact(dst.Buffer, body)
-					body = dst.Bytes()
-				}
 				if len(body) > 0 {
-					item.Body = string(zutil.When(len(body) > options.MaxBody, body[:options.MaxBody], body))
+					if body[0] == 123 && body[len(body)-1] == 125 {
+						dst := zbuff.New()
+						defer dst.Free()
+						_ = json.Compact(dst.Buffer, body)
+						body = dst.Bytes()
+					}
+					if len(body) > options.MaxBody {
+						body = body[:options.MaxBody]
+					}
+					item.Body = string(body)
 				}
 			}
 		}
@@ -122,14 +126,17 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 		// data
 		{
 			data := blw.body.Bytes()
-			if len(data) > 0 && data[0] == 123 && data[len(data)-1] == 125 {
-				dst := zbuff.New()
-				defer dst.Free()
-				_ = json.Compact(dst.Buffer, data)
-				data = dst.Bytes()
-			}
 			if len(data) > 0 {
-				item.Data = string(zutil.When(len(data) > options.MaxData, data[:options.MaxData], data))
+				if data[0] == 123 && data[len(data)-1] == 125 {
+					dst := zbuff.New()
+					defer dst.Free()
+					_ = json.Compact(dst.Buffer, data)
+					data = dst.Bytes()
+				}
+				if len(data) > options.MaxData {
+					data = data[:options.MaxData]
+				}
+				item.Data = string(data)
 			}
 		}
 

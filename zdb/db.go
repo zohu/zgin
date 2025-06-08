@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	p zmap.ConcurrentMap[string, *gorm.DB]
+	p = zmap.New[*gorm.DB]()
 	o *Options
 )
 
@@ -32,24 +32,28 @@ func New(options *Options) {
 	}
 }
 
-func AutoMigrate(dst ...any) {
-	if err := NewDB(context.Background()).AutoMigrate(dst...); err != nil {
-		zlog.Fatalf("auto migrate tables error: %v", err)
-		return
+func AutoMigrate(dst []any) {
+	if len(dst) > 0 {
+		if err := NewDB(context.Background()).AutoMigrate(dst...); err != nil {
+			zlog.Fatalf("auto migrate tables error: %v", err)
+			return
+		}
+		zlog.Infof("auto migrate tables success")
 	}
-	zlog.Infof("auto migrate tables success")
 }
 
 func NewDB(ctx context.Context, databases ...string) *gorm.DB {
-	database := zutil.When(len(databases) > 0, databases[0], o.DB)
-	if conn, ok := p.Get(database); ok {
+	if len(databases) == 0 {
+		databases = []string{o.DB}
+	}
+	if conn, ok := p.Get(databases[0]); ok {
 		return conn
 	}
-	conn, err := newdb(o, database)
+	conn, err := newdb(o, databases[0])
 	if err != nil {
 		zlog.Fatalf("newdb error: %v", err)
 		return nil
 	}
-	p.Set(database, conn)
+	p.Set(databases[0], conn)
 	return conn.WithContext(ctx)
 }

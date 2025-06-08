@@ -29,7 +29,7 @@ func (o *Options) Validate() error {
 	o.MaxIdle = zutil.FirstTruth(o.MaxIdle, 10)
 	o.MaxAlive = zutil.FirstTruth(o.MaxAlive, 100)
 	o.MaxAliveLife = zutil.FirstTruth(o.MaxAliveLife, time.Hour)
-	o.LogSlow = zutil.FirstTruth(o.LogSlow, 5)
+	o.LogSlow = zutil.FirstTruth(o.LogSlow, time.Second*5)
 	o.LogIgnoreNotFound = zutil.FirstTruth(o.LogIgnoreNotFound, "yes")
 	return validator.New().Struct(o)
 }

@@ -3,6 +3,7 @@ package zgin
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/zohu/zgin/zlog"
@@ -100,18 +101,21 @@ func (app *App) Listen() {
 
 	// 初始化依赖
 	for _, f := range app.preload {
+		fn := zutil.GetFunctionName(f)
 		if err := f(app.options); err != nil {
-			zlog.Fatalf("preload %s failed: %v", zutil.GetFunctionName(f), err)
+			zlog.Fatalf("preload %s failed: %v", fn, err)
+			continue
 		}
+		zlog.Infof("preload %s success", fn)
 	}
 
 	// 启动服务
 	go func() {
+		zlog.Infof("serve is listening on %s", app.server.Addr)
 		if err := app.server.ListenAndServe(); err != nil {
 			zlog.Fatalf("starting serve failed: %v", err)
 			return
 		}
-		zlog.Infof("serve is listening on :%s", app.server.Addr)
 	}()
 
 	// 优雅关闭服务
@@ -128,4 +132,13 @@ func (app *App) Listen() {
 		zlog.Fatalf("serve closing failed: %v", err)
 	}
 	zlog.Infof("serve closed")
+}
+
+func Bind[T any](fn func(*gin.Context, *T) RespBean) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var params T
+		if err := c.ShouldBindWith(&params, binding.JSON); err != nil {
+
+		}
+	}
 }

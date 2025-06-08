@@ -3,12 +3,14 @@ package zmiddle
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin/zid"
+	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
 )
 
 const RequestIdHeader = "X-Request-Id"
 
 func NewRequestId() gin.HandlerFunc {
+	zlog.Infof("middleware request id enabled")
 	return func(c *gin.Context) {
 		rid := zutil.FirstTruth(RequestId(c), zid.NextIdHex())
 		c.Request.Header.Add(RequestIdHeader, rid)

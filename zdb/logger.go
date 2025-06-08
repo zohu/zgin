@@ -48,20 +48,20 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 	switch {
 	case err != nil && (!l.ignoreRecordNotFound || !errors.Is(err, gorm.ErrRecordNotFound)):
 		sql, rows := fc()
-		l.Errorf("rows=%d elapsed=%6.3fs err=%s sql=%s", rows, elapsed.Seconds(), err.Error(), sql)
+		l.Errorf("rows=%d elapsed=%.3fs err=%s sql=%s", rows, elapsed.Seconds(), err.Error(), sql)
 	case l.logSlow != 0 && elapsed > l.logSlow:
 		sql, rows := fc()
 		var e string
 		if err != nil {
 			e = fmt.Sprintf("err=%s ", err.Error())
 		}
-		l.Warnf("rows=%d elapsed=%6.3fs %ssql=%s", rows, elapsed.Seconds(), e, sql)
+		l.Warnf("rows=%d elapsed=%.3fs %ssql=%s", rows, elapsed.Seconds(), e, sql)
 	default:
 		sql, rows := fc()
 		var e string
 		if err != nil {
 			e = fmt.Sprintf("err=%s ", err.Error())
 		}
-		l.Debugf("rows=%d elapsed=%6.3fs %ssql=%s", rows, elapsed.Seconds(), e, sql)
+		l.Debugf("rows=%d elapsed=%.3fs %ssql=%s", rows, elapsed.Seconds(), e, sql)
 	}
 }

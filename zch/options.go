@@ -1,8 +1,10 @@
 package zch
 
 import (
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/zohu/zgin/zutil"
+	"strings"
 	"time"
 )
 
@@ -22,4 +24,13 @@ func (o *Options) Validate() error {
 	o.Database = zutil.FirstTruth(o.Database, 0)
 	o.ClientName = zutil.FirstTruth(o.ClientName, "zch")
 	return validator.New().Struct(o)
+}
+
+type Prefix string
+
+func (p Prefix) Key(args ...string) string {
+	if len(args) == 0 {
+		return string(p)
+	}
+	return fmt.Sprintf("%s:%s", string(p), strings.Join(args, ":"))
 }
