@@ -14,7 +14,7 @@ type Options struct {
 
 func (o *Options) Validate() error {
 	o.MultiSize = zutil.FirstTruth(o.MultiSize, 1)
-	o.PoolSize = zutil.FirstTruth(o.PoolSize, 10)
+	o.PoolSize = zutil.FirstTruth(o.PoolSize, 100)
 	return validator.New().Struct(o)
 }
 

@@ -60,26 +60,26 @@ func New(opts *Options) gin.HandlerFunc {
 		// 校验登录态
 		token := Token(c)
 		if token == "" {
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 		// 解析登录态
 		d, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
 			zlog.Warnf("auth token decode err: %v", err)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 		d, err = zcpt.AesDecryptCBC(d, []byte(AESKey))
 		if err != nil {
 			zlog.Warnf("auth token decrypt err: %v", err)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 		tks := strings.Split(string(d), "##")
 		if len(tks) != 5 {
 			zlog.Warnf("auth token len err: 5 != [%d]", len(tks))
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 
@@ -89,13 +89,13 @@ func New(opts *Options) gin.HandlerFunc {
 		// 校验UA是否变化
 		if !options.AllowUaChange && agent != zcpt.Md5(c.Request.UserAgent()) {
 			zlog.Warnf("auth token userid=%s ua changed", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 		// 校验IP是否变化
 		if !options.AllowIpChange && ip != c.ClientIP() {
 			zlog.Warnf("auth token userid=%s ip changed", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 		// 提取用户数据
@@ -103,19 +103,19 @@ func New(opts *Options) gin.HandlerFunc {
 		uStr := options.Get(c.Request.Context(), vKey)
 		if uStr == "" {
 			zlog.Warnf("auth token userid=%s not found", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 		var auth Authorization
 		if err = sonic.UnmarshalString(uStr, &auth); err != nil {
 			zlog.Warnf("auth token userid=%s unmarshal err: %v", userid, err)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 		// 是否允许多设备登录
 		if !options.AllowMultipleDevice && auth.Session != zcpt.Md5(token) {
 			zlog.Warnf("auth token userid=%s device changed", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.ErrInvalidToken)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
 			return
 		}
 
@@ -130,7 +130,7 @@ func New(opts *Options) gin.HandlerFunc {
 	}
 }
 
-func Login(c *gin.Context, user Userinfo) zgin.RespBean {
+func Login(c *gin.Context, user Userinfo) *zgin.RespBean {
 	vKey := options.WithPrefix(fmt.Sprintf("%s:%s", TokenPrefix, user.Userid()))
 	// 是否允许多设备登录
 	if !options.AllowMultipleDevice {
@@ -143,7 +143,7 @@ func Login(c *gin.Context, user Userinfo) zgin.RespBean {
 	c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", false, false)
 	userStr, _ := sonic.MarshalString(&Authorization{Session: zcpt.Md5(token), Value: user})
 	options.Set(c.Request.Context(), vKey, userStr, options.Age)
-	return zgin.NewRespWithData(gin.H{
+	return zgin.NewRespWithData(c, gin.H{
 		"token":  token,
 		"expire": time.Now().Add(options.Age).Format(time.RFC3339),
 	})

@@ -26,6 +26,10 @@ func (o *LoggerOptions) Validate() {
 	o.MaxData = zutil.FirstTruth(o.MaxData, 1024)
 }
 
+var mLogger = zlog.NewZLogger(&zlog.Options{
+	SkipCallers: -1,
+})
+
 /**
  * format: method status ip latency request_id path userid-username query body >>> data error
  */
@@ -60,9 +64,9 @@ func (l *LoggerItem) Print() {
 	_, _ = buf.WriteStringIf(l.Data != "", fmt.Sprintf(">>> %s", l.Data))
 
 	if l.Status == http.StatusOK {
-		zlog.Infof(buf.String())
+		mLogger.Infof(buf.String())
 	} else {
-		zlog.Warnf(buf.String())
+		mLogger.Warnf(buf.String())
 	}
 }
 

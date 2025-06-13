@@ -50,6 +50,9 @@ func (o *Options) Validate() {
 	if o.Writer == nil {
 		o.Writer = os.Stdout
 	}
+	if o.Level == nil {
+		o.Level = slog.LevelDebug
+	}
 }
 
 func NewHandler(options *Options) slog.Handler {

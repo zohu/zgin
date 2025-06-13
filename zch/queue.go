@@ -37,6 +37,11 @@ func (t *Topic) Publish(ctx context.Context, message string, delay ...time.Durat
 	return R().LPush(ctx, t.prefix.Key(), message).Err()
 }
 
+// Subscribe
+// @Description: 订阅消息，handler返回err时，消息不消费
+// @receiver t
+// @param ctx
+// @param handler
 func (t *Topic) Subscribe(ctx context.Context, handler func(string) error) {
 	for {
 		result, err := R().BRPop(ctx, 0, t.prefix.Key()).Result()

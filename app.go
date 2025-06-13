@@ -3,7 +3,6 @@ package zgin
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/zohu/zgin/zlog"
@@ -63,18 +62,7 @@ func (app *App) WithShutdown(shutdown ...func()) *App {
 	app.shutdown = append(app.shutdown, shutdown...)
 	return app
 }
-func (app *App) WithGin(e *gin.Engine, midds ...gin.HandlerFunc) *App {
-	e.Use(func(c *gin.Context) {
-		defer func() {
-			if err := recover(); err != nil {
-				zlog.Errorf("server panic: %v", err)
-			}
-		}()
-		c.Next()
-	})
-	if len(midds) > 0 {
-		e.Use(midds...)
-	}
+func (app *App) WithGin(e *gin.Engine) *App {
 	app.tcp = e
 	return app
 }
@@ -134,11 +122,13 @@ func (app *App) Listen() {
 	zlog.Infof("serve closed")
 }
 
-func Bind[T any](fn func(*gin.Context, *T) RespBean) gin.HandlerFunc {
+func Bind[T any](fn func(*gin.Context, *T) *RespBean) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var params T
-		if err := c.ShouldBindWith(&params, binding.JSON); err != nil {
-
+		if err := c.ShouldBindJSON(&params); err != nil {
+			AbortHttpCode(c, http.StatusBadRequest, MessageInvalidParameter.Resp(c).WithValidateErrs(c, params, err))
+		} else {
+			Abort(c, fn(c, &params))
 		}
 	}
 }
