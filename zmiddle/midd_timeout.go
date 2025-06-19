@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zbuff"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -27,7 +29,8 @@ type bodyWriter struct {
 }
 
 func (w bodyWriter) Write(b []byte) (int, error) {
-	return w.body.Write(b)
+	_, _ = w.body.Write(b)
+	return w.ResponseWriter.Write(b)
 }
 
 func NewTimeout(options *TimeoutOptions) gin.HandlerFunc {
@@ -56,7 +59,7 @@ func NewTimeout(options *TimeoutOptions) gin.HandlerFunc {
 		go func() {
 			defer func() {
 				if err := recover(); err != nil {
-					pChan <- err
+					pChan <- fmt.Sprintf("%v\n%s", err, debug.Stack())
 				}
 			}()
 			c.Next()
@@ -65,11 +68,12 @@ func NewTimeout(options *TimeoutOptions) gin.HandlerFunc {
 
 		select {
 		case <-ctx.Done():
-			_ = c.AbortWithError(http.StatusGatewayTimeout, fmt.Errorf("timeout"))
+			zgin.AbortHttpCode(c, http.StatusGatewayTimeout, zgin.MessageTimeout.Resp(c))
 		case <-fChan:
-			_, _ = blw.ResponseWriter.Write(buf.Bytes())
-		case <-pChan:
-			_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("server error"))
+			return
+		case err := <-pChan:
+			zlog.Errorf("panic: %v", err)
+			zgin.AbortHttpCode(c, http.StatusInternalServerError, zgin.MessageRequestInvalid.Resp(c))
 		}
 	}
 }

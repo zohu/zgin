@@ -2,6 +2,7 @@ package zgin
 
 import (
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -9,6 +10,7 @@ import (
 	"github.com/zohu/zgin/zutil"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -125,8 +127,8 @@ func (app *App) Listen() {
 func Bind[T any](fn func(*gin.Context, *T) *RespBean) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var params T
-		if err := c.ShouldBindJSON(&params); err != nil {
-			AbortHttpCode(c, http.StatusBadRequest, MessageInvalidParameter.Resp(c).WithValidateErrs(c, params, err))
+		if err := c.ShouldBindJSON(&params); err != nil && !errors.Is(err, io.EOF) {
+			AbortHttpCode(c, http.StatusBadRequest, MessageParamInvalid.Resp(c).WithValidateErrs(c, params, err))
 		} else {
 			Abort(c, fn(c, &params))
 		}

@@ -94,7 +94,7 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 			Query:     c.Request.URL.Query().Encode(),
 		}
 
-		if u, _ := zauth.Auth(c); u != nil {
+		if u, ok := zauth.Auth(c); ok {
 			item.Userid, item.Username = u.Userid(), u.UserName()
 		}
 

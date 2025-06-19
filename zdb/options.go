@@ -24,7 +24,6 @@ type Options struct {
 }
 
 func (o *Options) Validate() error {
-	o.Debug = zutil.FirstTruth(o.Debug, zutil.Ptr(zutil.IsDebug()))
 	o.Config = zutil.FirstTruth(o.Config, "sslmode=disable TimeZone=Asia/Shanghai")
 	o.MaxIdle = zutil.FirstTruth(o.MaxIdle, 10)
 	o.MaxAlive = zutil.FirstTruth(o.MaxAlive, 100)

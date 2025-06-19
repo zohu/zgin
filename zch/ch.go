@@ -85,11 +85,5 @@ func (l *L2) FlushMemory() {
 // @param expiration
 // @return time.Duration
 func l1(expiration time.Duration) time.Duration {
-	if expiration > 10*time.Minute {
-		return 10 * time.Minute
-	} else if expiration > 5*time.Minute {
-		return 5 * time.Minute
-	} else {
-		return time.Minute
-	}
+	return zutil.When(expiration > 10*time.Minute, 10*time.Minute, expiration)
 }

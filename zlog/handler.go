@@ -51,7 +51,7 @@ func (o *Options) Validate() {
 		o.Writer = os.Stdout
 	}
 	if o.Level == nil {
-		o.Level = slog.LevelDebug
+		o.Level = slog.LevelInfo
 	}
 }
 

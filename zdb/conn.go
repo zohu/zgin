@@ -2,7 +2,6 @@ package zdb
 
 import (
 	"fmt"
-	"github.com/zohu/zgin/zutil"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -32,7 +31,7 @@ func newdb(o *Options, database string) (*gorm.DB, error) {
 	d.SetMaxIdleConns(o.MaxIdle)
 	d.SetMaxOpenConns(o.MaxAlive)
 	d.SetConnMaxLifetime(o.MaxAliveLife)
-	if (o.Debug != nil && *o.Debug) || zutil.IsDebug() {
+	if o.Debug != nil && *o.Debug {
 		db = db.Debug()
 	}
 	return db, nil

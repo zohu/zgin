@@ -9,7 +9,6 @@ import (
 )
 
 type Options struct {
-	Prefix              string                 `yaml:"prefix" note:"前缀"`
 	Age                 time.Duration          `yaml:"age" note:"生命周期"`
 	AllowMultipleDevice bool                   `yaml:"allow_multiple_device" note:"是否允许多设备同时登陆"`
 	AllowIpChange       bool                   `yaml:"allow_ip_change" note:"是否允许IP变化"`
@@ -23,7 +22,6 @@ type Options struct {
 }
 
 func (o *Options) Validate() error {
-	o.Prefix = zutil.FirstTruth(o.Prefix, "zauth")
 	o.Age = zutil.FirstTruth(o.Age, time.Hour*2)
 	if o.Set == nil || o.Expire == nil || o.Get == nil || o.Delete == nil {
 		return fmt.Errorf("storage method must be set")
@@ -34,7 +32,4 @@ func (o *Options) Validate() error {
 		}
 	}
 	return validator.New().Struct(o)
-}
-func (o *Options) WithPrefix(k string) string {
-	return fmt.Sprintf("%s:%s", o.Prefix, k)
 }

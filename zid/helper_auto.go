@@ -30,7 +30,6 @@ func findIdx(ctx context.Context, r *zch.Redis, ops *Options, retry uint16) uint
 	if r.SetNX(ctx, ops.prefix(retry), "occupied", time.Second*60).Val() {
 		return retry
 	}
-	zlog.Warnf("worker id [%d] is occupied, try next", retry)
 	return findIdx(ctx, r, ops, retry+1)
 }
 func alive(ctx context.Context, r *zch.Redis, prefix string) {

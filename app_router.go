@@ -6,10 +6,10 @@ import (
 )
 
 func NoRoute(c *gin.Context) {
-	AbortHttpCode(c, http.StatusNotFound, MessageInvalidPath.Resp(c))
+	AbortHttpCode(c, http.StatusNotFound, MessagePathInvalid.Resp(c))
 }
 func NoMethod(c *gin.Context) {
-	AbortHttpCode(c, http.StatusMethodNotAllowed, MessageInvalidMethod.Resp(c))
+	AbortHttpCode(c, http.StatusMethodNotAllowed, MessageMethodInvalid.Resp(c))
 }
 func Health(c *gin.Context) {
 	AbortString(c, "ok")

@@ -2,40 +2,25 @@ package zauth
 
 import (
 	"encoding/base64"
-	"fmt"
 	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zcpt"
-	"github.com/zohu/zgin/zid"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
 	"net/http"
 	"strings"
-	"time"
 )
-
-type Userinfo interface {
-	Userid() string
-	UserName() string
-	Validate() error
-}
-
-type Authorization struct {
-	Session string   `json:"session"`
-	Value   Userinfo `json:"value"`
-}
 
 const (
 	AESKey              = "315c2wd6vpc7q4hx"
-	TokenPrefix         = "auth"
 	LocalsUserPrefix    = "user"
 	LocalsSessionPrefix = "session"
 )
 
 var options *Options
 
-func New(opts *Options) gin.HandlerFunc {
+func NewMiddleware[T Userinfo](opts *Options) gin.HandlerFunc {
 	opts = zutil.FirstTruth(opts, &Options{})
 	if err := opts.Validate(); err != nil {
 		zlog.Fatalf("options is invalid: %v", err)
@@ -60,26 +45,26 @@ func New(opts *Options) gin.HandlerFunc {
 		// 校验登录态
 		token := Token(c)
 		if token == "" {
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
 		// 解析登录态
 		d, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
 			zlog.Warnf("auth token decode err: %v", err)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
 		d, err = zcpt.AesDecryptCBC(d, []byte(AESKey))
 		if err != nil {
 			zlog.Warnf("auth token decrypt err: %v", err)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
 		tks := strings.Split(string(d), "##")
 		if len(tks) != 5 {
 			zlog.Warnf("auth token len err: 5 != [%d]", len(tks))
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
 
@@ -89,33 +74,39 @@ func New(opts *Options) gin.HandlerFunc {
 		// 校验UA是否变化
 		if !options.AllowUaChange && agent != zcpt.Md5(c.Request.UserAgent()) {
 			zlog.Warnf("auth token userid=%s ua changed", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
 		// 校验IP是否变化
 		if !options.AllowIpChange && ip != c.ClientIP() {
 			zlog.Warnf("auth token userid=%s ip changed", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
 		// 提取用户数据
-		vKey := options.WithPrefix(fmt.Sprintf("%s:%s", TokenPrefix, userid))
+		vKey := PrefixToken.Key(userid)
 		uStr := options.Get(c.Request.Context(), vKey)
 		if uStr == "" {
 			zlog.Warnf("auth token userid=%s not found", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
-		var auth Authorization
+		var auth Authorization[T]
 		if err = sonic.UnmarshalString(uStr, &auth); err != nil {
 			zlog.Warnf("auth token userid=%s unmarshal err: %v", userid, err)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
 			return
 		}
 		// 是否允许多设备登录
 		if !options.AllowMultipleDevice && auth.Session != zcpt.Md5(token) {
 			zlog.Warnf("auth token userid=%s device changed", userid)
-			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageInvalidToken.Resp(c))
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginSessionInvalid.Resp(c))
+			return
+		}
+		// 用户状态是否正常
+		if vali := auth.Value.Validate(); vali != zgin.MessageSuccess {
+			zlog.Warnf("auth token userid=%s status invalid: %s", userid, vali)
+			zgin.AbortHttpCode(c, http.StatusUnauthorized, vali.Resp(c))
 			return
 		}
 
@@ -130,25 +121,6 @@ func New(opts *Options) gin.HandlerFunc {
 	}
 }
 
-func Login(c *gin.Context, user Userinfo) *zgin.RespBean {
-	vKey := options.WithPrefix(fmt.Sprintf("%s:%s", TokenPrefix, user.Userid()))
-	// 是否允许多设备登录
-	if !options.AllowMultipleDevice {
-		options.Delete(c.Request.Context(), vKey)
-	}
-	// 生成登录态
-	tk := fmt.Sprintf("%s##%s##%s##%s##%d", zid.NextIdShort(), zcpt.Md5(c.Request.UserAgent()), c.ClientIP(), user.Userid(), time.Now().Unix())
-	d, _ := zcpt.AesEncryptCBC([]byte(tk), []byte(AESKey))
-	token := base64.StdEncoding.EncodeToString(d)
-	c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", false, false)
-	userStr, _ := sonic.MarshalString(&Authorization{Session: zcpt.Md5(token), Value: user})
-	options.Set(c.Request.Context(), vKey, userStr, options.Age)
-	return zgin.NewRespWithData(c, gin.H{
-		"token":  token,
-		"expire": time.Now().Add(options.Age).Format(time.RFC3339),
-	})
-}
-
 func UpdateAuth(c *gin.Context, user Userinfo) {
 	session, ok := c.Get(LocalsSessionPrefix)
 	if !ok {
@@ -159,16 +131,16 @@ func UpdateAuth(c *gin.Context, user Userinfo) {
 		session = zcpt.Md5(token)
 	}
 	c.Set(LocalsUserPrefix, zutil.Ptr(user))
-	uStr, _ := sonic.MarshalString(&Authorization{Session: session.(string), Value: user})
-	vKey := options.WithPrefix(fmt.Sprintf("%s:%s", TokenPrefix, user.Userid()))
+	uStr, _ := sonic.MarshalString(&Authorization[Userinfo]{Session: session.(string), Value: user})
+	vKey := PrefixToken.Key(user.Userid())
 	options.Set(c.Request.Context(), vKey, uStr, options.Age)
 }
 
-func Auth(c *gin.Context) (Userinfo, error) {
+func Auth(c *gin.Context) (Userinfo, bool) {
 	if u, ok := c.Get(LocalsUserPrefix); ok {
-		return u.(Userinfo), nil
+		return u.(Userinfo), ok
 	}
-	return nil, fmt.Errorf("auth not found")
+	return nil, false
 }
 
 func Token(c *gin.Context) string {

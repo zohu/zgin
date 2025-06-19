@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/z18n"
 	"github.com/zohu/zgin/zutil"
 	"gorm.io/gorm"
 	"reflect"
@@ -36,7 +35,6 @@ func (p *Pages) ScopePage(db *gorm.DB) *gorm.DB {
 	return db.Offset((page - 1) * size).Limit(size)
 }
 
-type MessageID string
 type Empty struct{}
 type RespBean struct {
 	Code    int               `json:"code" xml:"code"`
@@ -50,6 +48,13 @@ type RespListBean[T any] struct {
 	Total int `json:"total" xml:"total"`
 	List  []T `json:"list" xml:"list"`
 }
+type RespOption[V any, E any] struct {
+	Label string `json:"label"`
+	Value V      `json:"value"`
+	Extra E      `json:"extra"`
+}
+
+type MessageID string
 
 func (m MessageID) Resp(c *gin.Context, kv ...map[string]string) *RespBean {
 	resp := &RespBean{
@@ -65,7 +70,7 @@ func (m MessageID) Resp(c *gin.Context, kv ...map[string]string) *RespBean {
 		if len(arr) == 2 {
 			status, _ := strconv.Atoi(arr[0])
 			resp.Code = status
-			resp.Message = SafeLocalize(c, arr[1], kv...)
+			resp.Message = z18n.Localize(c, arr[1], kv...)
 		}
 	}
 	return resp
@@ -75,8 +80,6 @@ func (r *RespBean) WithValidateErrs(c *gin.Context, h interface{}, errs error) *
 	var ves validator.ValidationErrors
 	if errors.As(errs, &ves) {
 		r.Notes = translateErrors(c, h, ves)
-	} else {
-		r.Message = errs.Error()
 	}
 	return r
 }
@@ -90,24 +93,6 @@ func (r *RespBean) WithData(data any) *RespBean {
 	return r
 }
 
-func SafeLocalize(c *gin.Context, ID string, kv ...map[string]string) string {
-	if l, ok := c.Get("localizer"); ok {
-		data := map[string]string{}
-		if len(kv) > 0 {
-			data = kv[0]
-		}
-		message, err := l.(*i18n.Localizer).Localize(&i18n.LocalizeConfig{
-			MessageID:    ID,
-			TemplateData: data,
-		})
-		if err == nil {
-			return message
-		}
-		zlog.Warnf("翻译错误: %v", err)
-	}
-	return ID
-}
-
 func translateErrors(c *gin.Context, h any, errs validator.ValidationErrors) map[string]string {
 	ets := make(map[string]string)
 	elem := reflect.TypeOf(h)
@@ -118,7 +103,7 @@ func translateErrors(c *gin.Context, h any, errs validator.ValidationErrors) map
 		field, _ := elem.FieldByName(err.StructField())
 		key := strings.Split(field.Tag.Get("json"), ",")[0]
 		if msg := field.Tag.Get("message"); msg != "" {
-			ets[key] = SafeLocalize(c, msg, nil)
+			ets[key] = z18n.Localize(c, msg)
 		} else {
 			ets[key] = err.Error()
 		}
