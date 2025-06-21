@@ -8,11 +8,11 @@ import (
 )
 
 type Options struct {
-	Host              string        `yaml:"host" validate:"required" note:"数据库地址"`
-	Port              string        `yaml:"port" validate:"required" note:"数据库端口"`
-	User              string        `yaml:"user" validate:"required" note:"数据库用户"`
-	Pass              string        `yaml:"pass" validate:"required" note:"数据库密码"`
-	DB                string        `yaml:"db" validate:"required" note:"数据库名"`
+	Host              string        `yaml:"host" binding:"required" note:"数据库地址"`
+	Port              string        `yaml:"port" binding:"required" note:"数据库端口"`
+	User              string        `yaml:"user" binding:"required" note:"数据库用户"`
+	Pass              string        `yaml:"pass" binding:"required" note:"数据库密码"`
+	DB                string        `yaml:"db" binding:"required" note:"数据库名"`
 	Config            string        `yaml:"config" note:"数据库配置"`
 	MaxIdle           int           `yaml:"max_idle" note:"最大闲置连接数"`
 	MaxAlive          int           `yaml:"max_alive" note:"最大存活连接数"`

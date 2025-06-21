@@ -37,9 +37,15 @@ func (c *Chain) Div(args ...float64) *Chain {
 func (c *Chain) Round(n int32) float64 {
 	return Round(c.Num, n)
 }
+func (c *Chain) Float64() float64 {
+	return c.Num
+}
 func (c *Chain) Int64() int64 {
 	return RoundInt64(c.Num)
 }
 func (c *Chain) String() string {
 	return fmt.Sprintf("%f", c.Num)
+}
+func (c *Chain) StringRound(n int32) string {
+	return fmt.Sprintf("%f", c.Round(n))
 }

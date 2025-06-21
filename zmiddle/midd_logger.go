@@ -63,10 +63,10 @@ func (l *LoggerItem) Print() {
 	_, _ = buf.WriteStringIf(l.Body != "", fmt.Sprintf("%s ", l.Body))
 	_, _ = buf.WriteStringIf(l.Data != "", fmt.Sprintf(">>> %s", l.Data))
 
-	if l.Status == http.StatusOK {
-		mLogger.Infof(buf.String())
+	if l.Status >= http.StatusOK && l.Status < http.StatusBadRequest {
+		mLogger.Infof("%s", buf.String())
 	} else {
-		mLogger.Warnf(buf.String())
+		mLogger.Warnf("%s", buf.String())
 	}
 }
 

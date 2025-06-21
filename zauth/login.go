@@ -9,6 +9,7 @@ import (
 	"github.com/zohu/zgin/zch"
 	"github.com/zohu/zgin/zcpt"
 	"github.com/zohu/zgin/zid"
+	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zmap"
 	"github.com/zohu/zgin/zutil"
 	"time"
@@ -16,23 +17,25 @@ import (
 
 const (
 	PrefixPreID zch.Prefix = "auth:pre"
-	PrefixToken zch.Prefix = "auth:token"
+	PrefixToken zch.Prefix = "auth:user"
 )
 
 var logins = zmap.NewStringer[LoginMode, LoginEntity]()
 
 func LoginMethodAdd(mode LoginMode, login LoginEntity) {
+	zlog.Infof("add login method: %s", mode)
 	logins.Set(mode, login)
 }
 
-func LoginRouteRegister(engine *gin.Engine) {
-	engine.POST("/login", zgin.Bind(preLogin))
-	engine.POST("/token", zgin.Bind(postLogin))
+func LoginRouteRegister(r *gin.RouterGroup) {
+	r.POST("/login", zgin.Bind(preLogin))
+	r.POST("/token", zgin.Bind(postLogin))
 }
 
 func preLogin(c *gin.Context, h *ParamLoginPre) *zgin.RespBean {
+	id := zid.NextIdHex()
 	if entity, ok := logins.Get(h.Mode); ok {
-		resp, err := entity.PreLogin(c, h)
+		resp, err := entity.PreLogin(c, id, h)
 		if err != nil {
 			return zgin.MessageLoginFailed.Resp(c).AddMessage(err.Error())
 		}
@@ -40,9 +43,9 @@ func preLogin(c *gin.Context, h *ParamLoginPre) *zgin.RespBean {
 			return activeToken(c, resp.User)
 		}
 		expire := zutil.When(resp.PreExpire > 0, resp.PreExpire, time.Minute*5)
-		options.Set(c.Request.Context(), PrefixPreID.Key(resp.ID), "waiting", expire)
+		options.Set(c.Request.Context(), PrefixPreID.Key(id), "waiting", expire)
 		return zgin.MessageSuccess.Resp(c).WithData(&Tokens{
-			ID:       resp.ID,
+			ID:       id,
 			Redirect: resp.Redirect,
 			Qrcode:   resp.Qrcode,
 			Expire:   time.Now().Add(expire).Format(time.RFC3339),
@@ -51,29 +54,24 @@ func preLogin(c *gin.Context, h *ParamLoginPre) *zgin.RespBean {
 	return zgin.MessageLoginUnsupportedMode.Resp(c)
 }
 func postLogin(c *gin.Context, h *ParamLoginPost) *zgin.RespBean {
-	status := options.Get(c.Request.Context(), PrefixPreID.Key(h.ID))
-	switch status {
-	case "done":
-		return zgin.MessageLoginIDUsed.Resp(c)
-	case "waiting":
-		if entity, ok := logins.Get(h.Mode); ok {
-			resp, err := entity.PostLogin(c, h)
-			if err != nil {
-				return zgin.MessageLoginFailed.Resp(c).AddMessage(err.Error())
-			}
-			if !resp.IsDone {
-				return zgin.MessageSuccess.Resp(c).WithData("waiting")
-			}
-			options.Set(c.Request.Context(), PrefixPreID.Key(h.ID), "done", time.Minute*5)
-			if resp.User != nil && resp.User.Userid() != "" {
-				return activeToken(c, resp.User)
-			}
-			return zgin.MessageLoginFailed.Resp(c)
-		}
-		return zgin.MessageLoginUnsupportedMode.Resp(c)
-	default:
+	if options.Get(c.Request.Context(), PrefixPreID.Key(h.ID)) == "" {
 		return zgin.MessageLoginTimeout.Resp(c)
 	}
+	if entity, ok := logins.Get(h.Mode); ok {
+		resp, err := entity.PostLogin(c, h.Mode, h.ID)
+		if err != nil {
+			return zgin.MessageLoginFailed.Resp(c).AddMessage(err.Error())
+		}
+		if !resp.IsDone {
+			return zgin.MessageSuccess.Resp(c).WithData("waiting")
+		}
+		options.Set(c.Request.Context(), PrefixPreID.Key(h.ID), "done", time.Minute*5)
+		if resp.User != nil && resp.User.Userid() != "" {
+			return activeToken(c, resp.User)
+		}
+		return zgin.MessageLoginFailed.Resp(c)
+	}
+	return zgin.MessageLoginUnsupportedMode.Resp(c)
 }
 func activeToken(c *gin.Context, user Userinfo) *zgin.RespBean {
 	if vali := user.Validate(); vali != zgin.MessageSuccess {

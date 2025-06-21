@@ -24,8 +24,8 @@ func init() {
 }
 
 type Options struct {
-	Addr   string `yaml:"addr" validate:"required" note:"监听地址"`
-	Domain string `yaml:"domain" validate:"required" note:"域名"`
+	Addr   string `yaml:"addr" binding:"required" note:"监听地址"`
+	Domain string `yaml:"domain" binding:"required" note:"域名"`
 }
 
 func (o *Options) Validate() {
@@ -40,7 +40,6 @@ type App struct {
 	server   *http.Server
 	tcp      http.Handler
 	grpc     http.Handler
-	preload  []func(*Options) error
 	shutdown []func()
 }
 
@@ -56,10 +55,6 @@ func NewApp(options *Options) *App {
 	}
 }
 
-func (app *App) WithPreload(preload ...func(*Options) error) *App {
-	app.preload = append(app.preload, preload...)
-	return app
-}
 func (app *App) WithShutdown(shutdown ...func()) *App {
 	app.shutdown = append(app.shutdown, shutdown...)
 	return app
@@ -88,16 +83,6 @@ func (app *App) Listen() {
 		}),
 		&http2.Server{},
 	)
-
-	// 初始化依赖
-	for _, f := range app.preload {
-		fn := zutil.GetFunctionName(f)
-		if err := f(app.options); err != nil {
-			zlog.Fatalf("preload %s failed: %v", fn, err)
-			continue
-		}
-		zlog.Infof("preload %s success", fn)
-	}
 
 	// 启动服务
 	go func() {

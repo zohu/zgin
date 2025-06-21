@@ -11,7 +11,7 @@ import (
 type Options struct {
 	Expiration    time.Duration `yaml:"expiration"`
 	CleanInterval time.Duration `yaml:"clean_interval"`
-	Addrs         []string      `validate:"required" yaml:"addrs"`
+	Addrs         []string      `binding:"required" yaml:"addrs"`
 	Database      int           `yaml:"database"`
 	Password      string        `yaml:"password"`
 	Prefix        string        `yaml:"prefix"`

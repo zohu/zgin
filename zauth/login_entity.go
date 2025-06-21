@@ -32,13 +32,13 @@ type Tokens struct {
 }
 
 type ParamLoginPre struct {
-	Mode    LoginMode `json:"mode" validate:"required" message:"Login.Mode"`
+	Mode    LoginMode `json:"mode" binding:"required" message:"Login.Mode"`
 	Account string    `json:"account"`
 	Code    string    `json:"code"`
 }
 type ParamLoginPost struct {
-	Mode LoginMode `json:"mode" validate:"required" message:"Login.Mode"`
-	ID   string    `json:"id" validate:"required"`
+	Mode LoginMode `json:"mode" binding:"required" message:"Login.Mode"`
+	ID   string    `json:"id" binding:"required"`
 }
 type RespLogin struct {
 	Tokens
@@ -53,12 +53,12 @@ type LoginEntity interface {
 	// @param h
 	// @return RespLogin
 	// @return error
-	PreLogin(c *gin.Context, h *ParamLoginPre) (RespLogin, error)
+	PreLogin(c *gin.Context, ID string, h *ParamLoginPre) (*RespLogin, error)
 	// PostLogin
 	// @Description: 登录认证，必须返回IsDone，否则会超时失败
 	// @param c
 	// @param h
 	// @return RespLogin
 	// @return error
-	PostLogin(c *gin.Context, h *ParamLoginPost) (RespLogin, error)
+	PostLogin(c *gin.Context, mode LoginMode, ID string) (*RespLogin, error)
 }
