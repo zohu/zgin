@@ -15,7 +15,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/panjf2000/ants/v2 v2.11.3
-	github.com/redis/go-redis/v9 v9.10.0
+	github.com/redis/go-redis/v9 v9.11.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/twpayne/go-geom v1.6.1
 	golang.org/x/crypto v0.39.0
