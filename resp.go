@@ -1,7 +1,7 @@
 package zgin
 
 import (
-	"fmt"
+	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -16,7 +16,8 @@ func NewRespWithList[T any](c *gin.Context, data *RespListBean[T]) *RespBean {
 func AbortHttpCode(c *gin.Context, code int, resp *RespBean) {
 	switch c.ContentType() {
 	case gin.MIMEPlain:
-		c.String(code, fmt.Sprintf("%s", resp.Data))
+		v, _ := sonic.MarshalString(resp)
+		c.String(code, v)
 	case gin.MIMEXML, gin.MIMEXML2:
 		c.XML(code, resp)
 	default:

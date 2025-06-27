@@ -13,7 +13,7 @@ func Mul(f1, f2 float64) float64 {
 }
 func Div(f1, f2 float64) float64 {
 	if f2 == 0 {
-		return 0
+		return f1
 	}
 	return decimal.NewFromFloat(f1).Div(decimal.NewFromFloat(f2)).InexactFloat64()
 }

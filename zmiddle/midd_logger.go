@@ -75,7 +75,7 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 	options = zutil.FirstTruth(options, &LoggerOptions{})
 	options.Validate()
 	return func(c *gin.Context) {
-		if c.Request.URL.Path == "/health" {
+		if c.Request.URL.Path == "/health" || c.Request.Method == http.MethodOptions {
 			c.Next()
 			return
 		}

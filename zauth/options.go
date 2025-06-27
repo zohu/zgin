@@ -16,14 +16,13 @@ type Options struct {
 	WhiteList           []string               `yaml:"white_list"`
 	PathSkip            func(path string) bool `note:"是否跳过校验"`
 	Set                 func(ctx context.Context, k, v string, d time.Duration)
-	Expire              func(ctx context.Context, k string, d time.Duration)
 	Get                 func(ctx context.Context, k string) string
 	Delete              func(ctx context.Context, k string)
 }
 
 func (o *Options) Validate() error {
 	o.Age = zutil.FirstTruth(o.Age, time.Hour*2)
-	if o.Set == nil || o.Expire == nil || o.Get == nil || o.Delete == nil {
+	if o.Set == nil || o.Get == nil || o.Delete == nil {
 		return fmt.Errorf("storage method must be set")
 	}
 	if o.PathSkip == nil {

@@ -1,10 +1,12 @@
 package z18n
 
 import (
+	"context"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/zohu/zgin/zch"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zmap"
 	"github.com/zohu/zgin/zutil"
@@ -14,14 +16,26 @@ import (
 	"strings"
 )
 
+/**
+i18n 优先从缓存翻译，如果没有则从文件翻译
+*/
+
+const (
+	PrefixI18n zch.Prefix = "z18n"
+)
+
+type Localizer func(ctx context.Context, lang language.Tag, ID string) string
+
 var bundle *i18n.Bundle
 var localizers zmap.ConcurrentMap[string, *i18n.Localizer]
+var custom Localizer
 
 func init() {
 	localizers = zmap.New[*i18n.Localizer]()
 	bundle = i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 }
+
 func LoadFile(filepath string) error {
 	stat, err := os.Stat(filepath)
 	if err != nil {
@@ -49,6 +63,16 @@ func LoadFile(filepath string) error {
 	}
 	return nil
 }
+func Language(c *gin.Context) string {
+	cookie, _ := c.Cookie("lang")
+	lang := zutil.FirstTruth(
+		c.Query("lang"),
+		cookie,
+		c.GetHeader("Accept-Language"),
+		language.English.String(),
+	)
+	return lang
+}
 func NewLocalizer(lang string) *i18n.Localizer {
 	if l, ok := localizers.Get(lang); ok {
 		return l
@@ -59,6 +83,13 @@ func NewLocalizer(lang string) *i18n.Localizer {
 }
 func Localize(c *gin.Context, ID string, kv ...map[string]string) string {
 	lang := Language(c)
+	if custom != nil && strings.HasPrefix(ID, PrefixI18n.Key()) {
+		if t, _, err := language.ParseAcceptLanguage(lang); err == nil && len(t) > 0 {
+			return custom(c.Request.Context(), t[0], ID)
+		} else {
+			zlog.Warnf("parse language failed len=%d : %v", len(t), err)
+		}
+	}
 	localizer := NewLocalizer(lang)
 	data := map[string]string{}
 	if len(kv) > 0 {
@@ -74,13 +105,7 @@ func Localize(c *gin.Context, ID string, kv ...map[string]string) string {
 	zlog.Warnf("翻译错误: %v", err)
 	return ID
 }
-func Language(c *gin.Context) string {
-	cookie, _ := c.Cookie("lang")
-	lang := zutil.FirstTruth(
-		c.Query("lang"),
-		cookie,
-		c.GetHeader("Accept-Language"),
-		language.English.String(),
-	)
-	return lang
+
+func AddLocalizer(lc Localizer) {
+	custom = lc
 }

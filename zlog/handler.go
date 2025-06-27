@@ -41,6 +41,7 @@ type Options struct {
 }
 
 func (o *Options) Validate() {
+	o.SkipCallers = zutil.FirstTruth(o.SkipCallers, 1)
 	o.TimeFormat = zutil.FirstTruth(o.TimeFormat, time.DateTime)
 	if o.ReplaceAttr == nil {
 		o.ReplaceAttr = func(groups []string, attr slog.Attr) slog.Attr {
