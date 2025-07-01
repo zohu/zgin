@@ -22,7 +22,6 @@ type Authorization[T Userinfo] struct {
 	Session string `json:"session"`
 	Value   T      `json:"value"`
 }
-
 type Tokens struct {
 	ID       string `json:"id,omitempty"`
 	Redirect string `json:"redirect,omitempty"`
@@ -30,7 +29,6 @@ type Tokens struct {
 	Token    string `json:"token,omitempty"`
 	Expire   string `json:"expire,omitempty"`
 }
-
 type ParamLoginPre struct {
 	Mode    LoginMode `json:"mode" binding:"required" message:"Login.Mode"`
 	Account string    `json:"account"`
@@ -46,6 +44,7 @@ type RespLogin struct {
 	IsDone    bool          // 登录逻辑是否走完
 	User      Userinfo      // 用户信息
 }
+
 type LoginEntity interface {
 	// PreLogin
 	// @Description: 预登陆，如果可以一次性登录则返回用户信息，否则返回预登陆信息Tokens
@@ -55,7 +54,7 @@ type LoginEntity interface {
 	// @return error
 	PreLogin(c *gin.Context, ID string, h *ParamLoginPre) (*RespLogin, error)
 	// PostLogin
-	// @Description: 登录认证，必须返回IsDone，否则会超时失败
+	// @Description: 异步登录认证，必须返回IsDone，否则会超时失败
 	// @param c
 	// @param h
 	// @return RespLogin
