@@ -20,10 +20,6 @@ import (
 i18n 优先从缓存翻译，如果没有则从文件翻译
 */
 
-const (
-	PrefixI18n zch.Prefix = "z18n"
-)
-
 type Localizer func(ctx context.Context, lang language.Tag, ID string) string
 
 var bundle *i18n.Bundle
@@ -83,7 +79,7 @@ func NewLocalizer(lang string) *i18n.Localizer {
 }
 func Localize(c *gin.Context, ID string, kv ...map[string]string) string {
 	lang := Language(c)
-	if custom != nil && strings.HasPrefix(ID, PrefixI18n.Key()) {
+	if custom != nil && strings.HasPrefix(ID, zch.PrefixI18n.Key()) {
 		if t, _, err := language.ParseAcceptLanguage(lang); err == nil && len(t) > 0 {
 			return custom(c.Request.Context(), t[0], ID)
 		} else {

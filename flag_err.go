@@ -19,6 +19,7 @@ const (
 	MessageLoginIDUsed          MessageID = "401:MessageLoginIDUsed"
 	MessageLoginTokenInvalid    MessageID = "401:MessageLoginTokenInvalid"
 	MessageLoginSessionInvalid  MessageID = "401:MessageLoginSessionInvalid"
+	MessageActionInvalid        MessageID = "403:MessageActionInvalid"
 	MessagePathInvalid          MessageID = "404:MessagePathInvalid"
 	MessageMethodInvalid        MessageID = "405:MessageMethodInvalid"
 	MessageRequestInvalid       MessageID = "500:MessageRequestInvalid"

@@ -5,6 +5,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin"
+	"github.com/zohu/zgin/zch"
 	"github.com/zohu/zgin/zcpt"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
@@ -84,8 +85,8 @@ func NewMiddleware[T Userinfo](opts *Options) gin.HandlerFunc {
 			return
 		}
 		// 提取用户数据
-		vKey := PrefixToken.Key(userid)
-		uStr := options.Get(c.Request.Context(), vKey)
+		vKey := zch.PrefixAuthToken.Key(userid)
+		uStr := zch.R().Get(c.Request.Context(), vKey).Val()
 		if uStr == "" {
 			zlog.Warnf("auth token userid=%s not found", userid)
 			zgin.AbortHttpCode(c, http.StatusUnauthorized, zgin.MessageLoginTokenInvalid.Resp(c))
@@ -116,7 +117,7 @@ func NewMiddleware[T Userinfo](opts *Options) gin.HandlerFunc {
 
 		// 刷新Token有效期
 		c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", false, false)
-		options.Set(c.Request.Context(), vKey, uStr, options.Age)
+		zch.R().Set(c.Request.Context(), vKey, uStr, options.Age)
 		c.Next()
 	}
 }
@@ -132,8 +133,8 @@ func UpdateAuth(c *gin.Context, user Userinfo) {
 	}
 	c.Set(LocalsUserPrefix, zutil.Ptr(user))
 	uStr, _ := sonic.MarshalString(&Authorization[Userinfo]{Session: session.(string), Value: user})
-	vKey := PrefixToken.Key(user.Userid())
-	options.Set(c.Request.Context(), vKey, uStr, options.Age)
+	vKey := zch.PrefixAuthToken.Key(user.Userid())
+	zch.R().Set(c.Request.Context(), vKey, uStr, options.Age)
 }
 
 func Auth(c *gin.Context) (Userinfo, bool) {
