@@ -87,10 +87,7 @@ func (app *App) Listen() {
 	// 启动服务
 	go func() {
 		zlog.Infof("serve is listening on %s", app.server.Addr)
-		if err := app.server.ListenAndServe(); err != nil {
-			zlog.Fatalf("starting serve failed: %v", err)
-			return
-		}
+		_ = app.server.ListenAndServe()
 	}()
 
 	// 优雅关闭服务
@@ -103,9 +100,7 @@ func (app *App) Listen() {
 	for _, f := range app.shutdown {
 		f()
 	}
-	if err := app.server.Shutdown(ctx); err != nil {
-		zlog.Fatalf("serve closing failed: %v", err)
-	}
+	_ = app.server.Shutdown(ctx)
 	zlog.Infof("serve closed")
 }
 

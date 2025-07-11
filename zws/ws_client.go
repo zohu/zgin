@@ -182,7 +182,7 @@ func (c *Client) read(exit chan error) {
 		case websocket.TextMessage:
 			data := string(d)
 			if len(data) >= 5 {
-				msg := NewMessage().WithString(data[5:]).WithEvent(MessageType(data[:4]))
+				msg := NewMessage().WithString(data[5:]).WithEvent(MessageCode(data[:4]))
 				go c.onMessage(msg)
 			}
 		default:

@@ -32,3 +32,9 @@ func (b *Buffer) WriteStringIf(ok bool, s string) (int, error) {
 	}
 	return b.WriteString(s)
 }
+
+func (b *Buffer) Clone() []byte {
+	result := make([]byte, b.Buffer.Len())
+	copy(result, b.Buffer.Bytes())
+	return result
+}

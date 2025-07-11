@@ -63,7 +63,7 @@ func (h *Home[T]) Broadcast(msg *Message) {
 	})
 	wg.Wait()
 }
-func (h *Home[T]) BroadcastWithFilter(msg *Message, filter func(data T) bool) {
+func (h *Home[T]) BroadcastWithFilter(msg *Message, filter func(ID string, data T) bool) {
 	if h.serves.Count() == 0 {
 		return
 	}
@@ -71,7 +71,7 @@ func (h *Home[T]) BroadcastWithFilter(msg *Message, filter func(data T) bool) {
 	pool, _ := ants.NewPool(size)
 	var wg sync.WaitGroup
 	h.serves.IterCb(func(ID string, c WebsocketServer[T]) {
-		if ok := filter(c.GetData()); ok {
+		if ok := filter(ID, c.GetData()); ok {
 			wg.Add(1)
 			_ = pool.Submit(func() {
 				_ = c.Send(msg)
