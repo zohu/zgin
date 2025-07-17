@@ -25,4 +25,9 @@ const (
 	MessageRequestInvalid       MessageID = "500:MessageRequestInvalid"
 	MessageNotImplemented       MessageID = "501:MessageNotImplemented"
 	MessageTimeout              MessageID = "504:MessageTimeout"
+	MessageCreateFailed         MessageID = "600:MessageCreateFailed"
+	MessageUpdateFailed         MessageID = "601:MessageUpdateFailed"
+	MessageSaveFailed           MessageID = "602:MessageSaveFailed"
+	MessageDeleteFailed         MessageID = "603:MessageDeleteFailed"
+	MessageQueryFailed          MessageID = "604:MessageQueryFailed"
 )

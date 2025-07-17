@@ -19,6 +19,7 @@ func Action(actions ...string) gin.HandlerFunc {
 		if auth, ok := Auth(c); ok {
 			if require(c.Request.Context(), auth.Userid(), actions) {
 				c.Next()
+				return
 			}
 		}
 		zgin.AbortHttpCode(c, http.StatusForbidden, zgin.MessageActionInvalid.Resp(c))

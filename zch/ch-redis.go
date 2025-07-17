@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"log"
 	"net"
 	"strings"
 )
@@ -33,6 +34,30 @@ func NewRedis(options *Options) *Redis {
 	return &Redis{
 		UniversalClient: client,
 	}
+}
+
+func (r *Redis) BatchDelete(ctx context.Context, pattern string, batchSize ...int64) error {
+	batchSize = append(batchSize, 1000)
+	var cursor uint64
+	var keys []string
+	for {
+		var err error
+		keys, cursor, err = r.Scan(ctx, cursor, pattern, batchSize[0]).Result()
+		if err != nil {
+			return fmt.Errorf("scan failed: %w", err)
+		}
+		if len(keys) > 0 {
+			count, err := r.Del(ctx, keys...).Result()
+			if err != nil {
+				return fmt.Errorf("delete failed: %w", err)
+			}
+			log.Printf("Deleted %d keys in current batch", count)
+		}
+		if cursor == 0 {
+			break
+		}
+	}
+	return nil
 }
 
 /**
