@@ -79,10 +79,12 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		for _, ignore := range options.Ignore {
-			if strings.HasPrefix(c.Request.URL.Path[1:], ignore) {
-				c.Next()
-				return
+		if len(c.Request.URL.Path) != 0 {
+			for _, ignore := range options.Ignore {
+				if strings.HasPrefix(c.Request.URL.Path[1:], ignore) {
+					c.Next()
+					return
+				}
 			}
 		}
 		start := time.Now()
