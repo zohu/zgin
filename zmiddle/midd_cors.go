@@ -30,10 +30,6 @@ func NewCors(options *CorsOptions) gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusMethodNotAllowed)
 			return
 		}
-		if c.Request.Method == http.MethodOptions {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
 		origin := c.GetHeader("Origin")
 		if origin != "" {
 			if slices.Contains(options.AllowedOrigin, c.Request.URL.Host) {
@@ -52,6 +48,10 @@ func NewCors(options *CorsOptions) gin.HandlerFunc {
 				c.Header("Access-Control-Allow-Credentials", options.AllowCredentials)
 			}
 			c.Header("Access-Control-Max-Age", "86400")
+		}
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
 		}
 		c.Next()
 	}
