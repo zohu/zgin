@@ -32,7 +32,7 @@ func NewCors(options *CorsOptions) gin.HandlerFunc {
 		}
 		origin := c.GetHeader("Origin")
 		if origin != "" {
-			if slices.Contains(options.AllowedOrigin, c.Request.URL.Host) {
+			if slices.Contains(options.AllowedOrigin, origin) {
 				c.Header("Access-Control-Allow-Origin", origin)
 			}
 			if options.AllowedMethod != "" {
