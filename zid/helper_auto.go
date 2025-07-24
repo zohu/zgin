@@ -27,8 +27,12 @@ func findIdx(ctx context.Context, r *zch.Redis, ops *Options, retry uint16) uint
 	if retry > ops.maxWorkerIdNumber() {
 		zlog.Fatalf("all worker id [0-%d] are occupied, please extend WorkerIdBitLength", retry-1)
 	}
-	if r.SetNX(ctx, ops.prefix(retry), "occupied", time.Second*60).Val() {
+	ok, err := r.SetNX(ctx, ops.prefix(retry), "occupied", time.Second*60).Result()
+	if ok {
 		return retry
+	}
+	if err != nil {
+		zlog.Warnf("find worker id error: %v", err)
 	}
 	return findIdx(ctx, r, ops, retry+1)
 }
