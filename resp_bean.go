@@ -43,15 +43,16 @@ type RespBean struct {
 	Notes   map[string]string `json:"notes,omitempty" xml:"notes"`
 }
 type RespListBean[T any] struct {
-	Page  int `json:"page" xml:"page"`
-	Size  int `json:"size" xml:"size"`
-	Total int `json:"total" xml:"total"`
-	List  []T `json:"list" xml:"list"`
+	Page  int   `json:"page" xml:"page"`
+	Size  int   `json:"size" xml:"size"`
+	Total int64 `json:"total" xml:"total"`
+	List  []T   `json:"list" xml:"list"`
 }
 type RespOption[V any, E any] struct {
-	Label string `json:"label"`
-	Value V      `json:"value"`
-	Extra E      `json:"extra"`
+	Label    string             `json:"label"`
+	Value    V                  `json:"value"`
+	Extra    E                  `json:"extra"`
+	Children []RespOption[V, E] `json:"children"`
 }
 
 type MessageID string

@@ -59,7 +59,7 @@ func LoadFile(filepath string) error {
 	}
 	return nil
 }
-func Language(c *gin.Context) string {
+func Language(c *gin.Context) language.Tag {
 	cookie, _ := c.Cookie("lang")
 	lang := zutil.FirstTruth(
 		c.Query("lang"),
@@ -67,24 +67,39 @@ func Language(c *gin.Context) string {
 		c.GetHeader("Accept-Language"),
 		language.English.String(),
 	)
-	return lang
+	t, _, err := language.ParseAcceptLanguage(lang)
+	if err != nil {
+		zlog.Warnf("parse accept language failed: %v", err)
+		return language.English
+	}
+	t = append(t, language.English)
+	switch t[0].String() {
+	case "zh", "zh-CN", "zh-Hans", "zh-Hans-CN":
+		return language.Chinese
+	case "tw", "zh-TW", "zh-HK", "zh-Hant", "zh-Hant-TW":
+		return language.TraditionalChinese
+	case "en", "en-US", "en-GB":
+		return language.English
+	case "ja", "ja-JP":
+		return language.Japanese
+	case "pt", "pt-BR":
+		return language.Portuguese
+	default:
+		return t[0]
+	}
 }
-func NewLocalizer(lang string) *i18n.Localizer {
-	if l, ok := localizers.Get(lang); ok {
+func NewLocalizer(tag language.Tag) *i18n.Localizer {
+	if l, ok := localizers.Get(tag.String()); ok {
 		return l
 	}
-	l := i18n.NewLocalizer(bundle, lang)
-	localizers.Set(lang, l)
+	l := i18n.NewLocalizer(bundle, tag.String())
+	localizers.Set(tag.String(), l)
 	return l
 }
 func Localize(c *gin.Context, ID string, kv ...map[string]string) string {
 	lang := Language(c)
 	if custom != nil && strings.HasPrefix(ID, zch.PrefixI18n.Key()) {
-		if t, _, err := language.ParseAcceptLanguage(lang); err == nil && len(t) > 0 {
-			return custom(c.Request.Context(), t[0], ID)
-		} else {
-			zlog.Warnf("parse language failed len=%d : %v", len(t), err)
-		}
+		return custom(c.Request.Context(), lang, ID)
 	}
 	localizer := NewLocalizer(lang)
 	data := map[string]string{}

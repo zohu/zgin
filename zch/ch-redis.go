@@ -6,7 +6,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
-	"log"
 	"net"
 	"strings"
 )
@@ -36,28 +35,29 @@ func NewRedis(options *Options) *Redis {
 	}
 }
 
-func (r *Redis) BatchDelete(ctx context.Context, pattern string, batchSize ...int64) error {
+func (r *Redis) BatchDelete(ctx context.Context, pattern string, batchSize ...int64) (int64, error) {
 	batchSize = append(batchSize, 1000)
 	var cursor uint64
 	var keys []string
+	var total int64
 	for {
 		var err error
 		keys, cursor, err = r.Scan(ctx, cursor, pattern, batchSize[0]).Result()
 		if err != nil {
-			return fmt.Errorf("scan failed: %w", err)
+			return 0, fmt.Errorf("scan failed: %w", err)
 		}
 		if len(keys) > 0 {
 			count, err := r.Del(ctx, keys...).Result()
 			if err != nil {
-				return fmt.Errorf("delete failed: %w", err)
+				return 0, fmt.Errorf("delete failed: %w", err)
 			}
-			log.Printf("Deleted %d keys in current batch", count)
+			total += count
 		}
 		if cursor == 0 {
 			break
 		}
 	}
-	return nil
+	return total, nil
 }
 
 /**
@@ -103,24 +103,24 @@ func addPrefix(prefix string, cmd redis.Cmder) {
 	switch name {
 	case "MGET", "DEL":
 		for i := 1; i < len(args); i++ {
-			args[i] = fmt.Sprintf("%s:%v", prefix, args[i])
+			args[i] = withPrefix(prefix, args[i].(string))
 		}
 	case "MSET":
 		for i := 1; i < len(args); i += 2 {
-			args[i] = fmt.Sprintf("%s:%v", prefix, args[i])
+			args[i] = withPrefix(prefix, args[i].(string))
 		}
 	case "SCAN":
 		if len(args) > 2 {
 			for i := 2; i < len(args); i += 2 {
 				if args[i] == "match" && len(args) > i+1 {
-					args[i+1] = fmt.Sprintf("%s:%v", prefix, args[i+1])
+					args[i+1] = withPrefix(prefix, args[i+1].(string))
 					break
 				}
 			}
 		}
 	default:
 		if canWithPrefix(name) {
-			args[1] = fmt.Sprintf("%s:%v", prefix, args[1])
+			args[1] = withPrefix(prefix, args[1].(string))
 		}
 	}
 }
@@ -138,4 +138,10 @@ func canWithPrefix(name string) bool {
 	default:
 		return false
 	}
+}
+func withPrefix(prefix string, key string) string {
+	if strings.HasPrefix(key, prefix+":") {
+		return key
+	}
+	return prefix + ":" + key
 }
