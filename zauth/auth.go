@@ -99,12 +99,12 @@ func ScanAuth[T Userinfo](c *gin.Context, auth *Authorization[T]) zgin.MessageID
 	// 解析登录态
 	d, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		zlog.Warnf("auth token decode err: %v", err)
+		zlog.Warnf("auth token decode err: %v, token=%s", err, token)
 		return zgin.MessageLoginTokenInvalid
 	}
 	d, err = zcpt.AesDecryptCBC(d, []byte(AESKey))
 	if err != nil {
-		zlog.Warnf("auth token decrypt err: %v", err)
+		zlog.Warnf("auth token decrypt err: %v, token=%s", err, token)
 		return zgin.MessageLoginTokenInvalid
 	}
 	tks := strings.Split(string(d), "##")
