@@ -43,7 +43,7 @@ func preLogin(c *gin.Context, h *ParamLoginPre) *zgin.RespBean {
 			ID:       id,
 			Redirect: resp.Redirect,
 			Qrcode:   resp.Qrcode,
-			Expire:   time.Now().Add(expire).Format(time.RFC3339),
+			Expire:   int64(expire.Seconds()),
 		})
 	}
 	return zgin.MessageLoginUnsupportedMode.Resp(c)
@@ -86,6 +86,6 @@ func activeToken(c *gin.Context, user Userinfo) *zgin.RespBean {
 	zch.R().Set(c.Request.Context(), vKey, userStr, options.Age)
 	return zgin.MessageSuccess.Resp(c).WithData(&Tokens{
 		Token:  token,
-		Expire: time.Now().Add(options.Age).Format(time.RFC3339),
+		Expire: int64(options.Age.Seconds()),
 	})
 }

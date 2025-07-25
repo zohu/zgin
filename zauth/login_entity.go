@@ -27,7 +27,7 @@ type Tokens struct {
 	Redirect string `json:"redirect,omitempty"`
 	Qrcode   string `json:"qrcode,omitempty"`
 	Token    string `json:"token,omitempty"`
-	Expire   string `json:"expire,omitempty"`
+	Expire   int64  `json:"expire,omitempty"`
 }
 type ParamLoginPre struct {
 	Mode    LoginMode `json:"mode" binding:"required" message:"Login.Mode"`
