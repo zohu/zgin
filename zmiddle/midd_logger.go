@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/medama-io/go-useragent"
 	"github.com/zohu/zgin/zauth"
 	"github.com/zohu/zgin/zbuff"
 	"github.com/zohu/zgin/zlog"
@@ -41,6 +42,8 @@ type LoggerItem struct {
 	Latency   int64  `json:"latency"`
 	RequestId string `json:"request_id"`
 	Path      string `json:"path"`
+	Browser   string `json:"browser"`
+	OS        string `json:"os"`
 	Userid    string `json:"userid"`
 	Username  string `json:"username"`
 	Query     string `json:"query"`
@@ -61,6 +64,8 @@ func (l *LoggerItem) Print() {
 	_, _ = buf.WriteStringIf(l.RequestId != "", fmt.Sprintf("%s ", l.RequestId))
 	_, _ = buf.WriteStringIf(l.Path != "", fmt.Sprintf("%s ", l.Path))
 	_, _ = buf.WriteStringIf(l.Userid != "", fmt.Sprintf("%s-%s ", l.Userid, l.Username))
+	_, _ = buf.WriteStringIf(l.OS != "", fmt.Sprintf("%s ", l.OS))
+	_, _ = buf.WriteStringIf(l.Browser != "", fmt.Sprintf("%s ", l.Browser))
 	_, _ = buf.WriteStringIf(l.Query != "", fmt.Sprintf("%s ", l.Query))
 	_, _ = buf.WriteStringIf(l.Body != "", fmt.Sprintf("%s ", l.Body))
 	_, _ = buf.WriteStringIf(l.Data != "", fmt.Sprintf(">>> %s", l.Data))
@@ -76,6 +81,7 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 	zlog.Infof("middleware api logger enabled")
 	options = zutil.FirstTruth(options, &LoggerOptions{})
 	options.Validate()
+	ua := useragent.NewParser()
 	return func(c *gin.Context) {
 		if c.Request.URL.Path == "/health" || c.Request.Method == http.MethodOptions {
 			c.Next()
@@ -89,12 +95,15 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 				}
 			}
 		}
+		agent := ua.Parse(c.Request.UserAgent())
 		start := time.Now()
 		item := &LoggerItem{
 			Method:    c.Request.Method,
 			Ip:        c.ClientIP(),
 			RequestId: RequestId(c),
 			Path:      c.Request.URL.Path,
+			Browser:   agent.Browser().String() + "@" + agent.BrowserVersion(),
+			OS:        agent.OS().String(),
 			Query:     c.Request.URL.Query().Encode(),
 		}
 

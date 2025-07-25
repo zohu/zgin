@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/medama-io/go-useragent v1.1.0
 	github.com/modern-go/reflect2 v1.0.2
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/panjf2000/ants/v2 v2.11.3
@@ -27,6 +28,7 @@ require (
 )
 
 require (
+	github.com/boyter/go-string v1.0.5 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
