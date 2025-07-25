@@ -40,9 +40,9 @@ type ParamLoginPost struct {
 }
 type RespLogin struct {
 	Tokens
-	PreExpire time.Duration `json:"pre_expire"` // 预登录过期时间
-	IsDone    bool          `json:"is_done"`    // 登录逻辑是否走完
-	User      Userinfo      `json:"user"`       // 用户信息
+	PreExpire time.Duration // 预登录过期时间
+	IsDone    bool          // 登录逻辑是否走完
+	User      Userinfo      // 用户信息
 }
 
 type LoginEntity interface {
