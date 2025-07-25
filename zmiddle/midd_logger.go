@@ -51,8 +51,10 @@ type LoggerItem struct {
 func (l *LoggerItem) Print() {
 	buf := zbuff.New()
 	defer buf.Free()
-
-	_, _ = buf.WriteStringIf(l.Method != "", fmt.Sprintf("%-4s ", zutil.When(len(l.Method) > 4, l.Method[:4], l.Method)))
+	if len(l.Method) > 4 {
+		l.Method = l.Method[:4]
+	}
+	_, _ = buf.WriteStringIf(l.Method != "", fmt.Sprintf("%-4s ", l.Method))
 	_, _ = buf.WriteStringIf(l.Status != 0, fmt.Sprintf("%d ", l.Status))
 	_, _ = buf.WriteStringIf(l.Ip != "", fmt.Sprintf("%-15s ", l.Ip))
 	buf.WriteString(fmt.Sprintf("%4dms ", l.Latency))
