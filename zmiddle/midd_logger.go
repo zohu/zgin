@@ -56,8 +56,8 @@ func (l *LoggerItem) Print() {
 	}
 	_, _ = buf.WriteStringIf(l.Method != "", fmt.Sprintf("%-4s ", l.Method))
 	_, _ = buf.WriteStringIf(l.Status != 0, fmt.Sprintf("%d ", l.Status))
-	_, _ = buf.WriteStringIf(l.Ip != "", fmt.Sprintf("%-15s ", l.Ip))
-	buf.WriteString(fmt.Sprintf("%4dms ", l.Latency))
+	_, _ = buf.WriteStringIf(l.Ip != "", fmt.Sprintf("%-14s ", l.Ip))
+	buf.WriteString(fmt.Sprintf("%3dms ", l.Latency))
 	_, _ = buf.WriteStringIf(l.RequestId != "", fmt.Sprintf("%s ", l.RequestId))
 	_, _ = buf.WriteStringIf(l.Path != "", fmt.Sprintf("%s ", l.Path))
 	_, _ = buf.WriteStringIf(l.Userid != "", fmt.Sprintf("%s-%s ", l.Userid, l.Username))
