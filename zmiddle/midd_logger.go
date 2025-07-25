@@ -102,7 +102,7 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 			Ip:        c.ClientIP(),
 			RequestId: RequestId(c),
 			Path:      c.Request.URL.Path,
-			Browser:   agent.Browser().String() + "@" + agent.BrowserVersion(),
+			Browser:   agent.Browser().String(),
 			OS:        agent.OS().String(),
 			Query:     c.Request.URL.Query().Encode(),
 		}
