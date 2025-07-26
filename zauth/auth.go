@@ -10,14 +10,14 @@ import (
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
 const (
 	AESKey              = "315c2wd6vpc7q4hx"
-	LocalsUserPrefix    = "user"
-	LocalsSessionPrefix = "session"
+	LocalsUserPrefix    = "auth:user"
+	LocalsSessionPrefix = "auth:session"
+	LocalsToken         = "auth:token"
 )
 
 var options *Options
@@ -82,13 +82,16 @@ func Auth(c *gin.Context) (Userinfo, bool) {
 }
 
 func Token(c *gin.Context) string {
-	auth, _ := c.Cookie("auth")
-	query, _ := url.QueryUnescape(c.Query("auth"))
-	return strings.TrimSpace(zutil.FirstTruth(
-		c.GetHeader("Authorization"),
-		query,
-		auth,
-	))
+	if token, ok := c.Get(LocalsToken); ok {
+		return strings.TrimSpace(token.(string))
+	}
+	if token, _ := c.Cookie("auth"); token != "" {
+		return strings.TrimSpace(token)
+	}
+	if token := c.GetHeader("Authorization"); token != "" {
+		return strings.TrimSpace(token)
+	}
+	return ""
 }
 
 func ScanAuth[T Userinfo](c *gin.Context, auth *Authorization[T]) zgin.MessageID {
