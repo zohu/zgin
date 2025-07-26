@@ -19,7 +19,6 @@ type WebsocketServer[T any] interface {
 	Release()
 	SetData(data T)
 	GetData() T
-	UnsetData()
 }
 type Serve[T any] struct {
 	Websocket
@@ -86,13 +85,12 @@ func (s *Serve[T]) Release() {
 	s.rmt.Unlock()
 }
 func (s *Serve[T]) SetData(data T) {
+	s.rmt.Lock()
+	defer s.rmt.Unlock()
 	s.data = data
 }
 func (s *Serve[T]) GetData() T {
 	return s.data
-}
-func (s *Serve[T]) UnsetData() {
-	s.data = *new(T)
 }
 func (s *Serve[T]) Start() error {
 	var exit = make(chan error, 1)
