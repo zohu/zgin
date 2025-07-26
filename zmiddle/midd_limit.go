@@ -2,8 +2,8 @@ package zmiddle
 
 import (
 	"fmt"
-	"github.com/didip/tollbooth"
-	"github.com/didip/tollbooth/limiter"
+	"github.com/didip/tollbooth/v8"
+	"github.com/didip/tollbooth/v8/limiter"
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
@@ -13,15 +13,13 @@ import (
 )
 
 type LimitOptions struct {
-	BodySize   int      `yaml:"body_size" note:"MB"`
-	Rate       float64  `yaml:"rate" note:"every minute"`
-	RateLookup []string `yaml:"rate_lookup"`
+	BodySize int     `yaml:"body_size" note:"MB"`
+	Rate     float64 `yaml:"rate" note:"every minute"`
 }
 
 func (o *LimitOptions) Validate() {
 	o.BodySize = zutil.FirstTruth(o.BodySize, 2)
 	o.Rate = zutil.FirstTruth(o.Rate, 9999)
-	o.RateLookup = append([]string{"Remote-Addr", "X-Forwarded-For", "X-Real-IP"}, o.RateLookup...)
 }
 
 func NewLimit(options *LimitOptions) gin.HandlerFunc {
@@ -30,7 +28,10 @@ func NewLimit(options *LimitOptions) gin.HandlerFunc {
 	options.Validate()
 
 	lmt := tollbooth.NewLimiter(options.Rate, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Minute})
-	lmt.SetIPLookups(options.RateLookup)
+	lmt.SetIPLookup(limiter.IPLookup{
+		Name:           "X-Real-IP",
+		IndexFromRight: 0,
+	})
 
 	return func(c *gin.Context) {
 		if httpError := tollbooth.LimitByRequest(lmt, c.Writer, c.Request); httpError != nil {
