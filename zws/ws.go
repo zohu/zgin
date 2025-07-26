@@ -24,7 +24,7 @@ var (
 type Websocket struct {
 	isConnected bool
 	Conn        *websocket.Conn
-	rmt         *sync.RWMutex
+	rmt         *sync.Mutex
 	onConnected func()
 	onMessage   func(msg *Message)
 	onErr       func(err error)

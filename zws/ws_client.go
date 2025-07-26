@@ -59,8 +59,8 @@ func (c *Client) OnErr(f func(err error)) {
 	c.onErr = f
 }
 func (c *Client) IsClose() bool {
-	c.rmt.RLock()
-	defer c.rmt.RUnlock()
+	c.rmt.Lock()
+	defer c.rmt.Unlock()
 	return !c.isConnected
 }
 func (c *Client) Release() {

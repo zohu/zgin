@@ -29,7 +29,7 @@ type Serve[T any] struct {
 
 func NewServe[T any](w http.ResponseWriter, r *http.Request, h http.Header, opts ...*Options) (WebsocketServer[T], error) {
 	s := new(Serve[T])
-	s.rmt = new(sync.RWMutex)
+	s.rmt = new(sync.Mutex)
 	if len(opts) > 0 {
 		s.opts = opts[0]
 	}
@@ -70,8 +70,8 @@ func (s *Serve[T]) OnErr(f func(err error)) {
 	s.onErr = f
 }
 func (s *Serve[T]) IsClose() bool {
-	s.rmt.RLock()
-	defer s.rmt.RUnlock()
+	s.rmt.Lock()
+	defer s.rmt.Unlock()
 	return !s.isConnected
 }
 func (s *Serve[T]) Release() {
@@ -90,6 +90,8 @@ func (s *Serve[T]) SetData(data T) {
 	s.data = data
 }
 func (s *Serve[T]) GetData() T {
+	s.rmt.Lock()
+	defer s.rmt.Unlock()
 	return s.data
 }
 func (s *Serve[T]) Start() error {
