@@ -10,9 +10,10 @@ import (
 type WebsocketHome[T any] interface {
 	Add(ID string, s WebsocketServer[T]) error
 	Load(ID string) (WebsocketServer[T], bool)
+	LoadFunc(func(T) bool) (WebsocketServer[T], bool)
 	Remove(ID string)
 	Broadcast(msg *Message)
-	BroadcastWithFilter(msg *Message, filter func(data T) bool)
+	BroadcastWithFilter(msg *Message, filter func(ID string, data T) bool)
 	OnlineSize() int
 }
 
@@ -40,6 +41,14 @@ func (h *Home[T]) Add(ID string, s WebsocketServer[T]) error {
 }
 func (h *Home[T]) Load(ID string) (WebsocketServer[T], bool) {
 	return h.serves.Get(ID)
+}
+func (h *Home[T]) LoadFunc(fn func(T) bool) (WebsocketServer[T], bool) {
+	for s := range h.serves.Iter() {
+		if fn(s.Val.GetData()) {
+			return s.Val, true
+		}
+	}
+	return nil, false
 }
 func (h *Home[T]) Remove(ID string) {
 	if s, ok := h.Load(ID); ok {
