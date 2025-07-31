@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -13,6 +14,7 @@ import (
 	"github.com/zohu/zgin/zutil"
 	"gorm.io/gorm"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -109,7 +111,7 @@ func Upload(ctx context.Context, h *ReqUpload, rs io.ReadSeeker) (*RespUpload, e
 	}, nil
 }
 
-func UploadTransfer(ctx context.Context, h *ReqUpload, url string) (*RespUpload, error) {
+func UploadTransfer(ctx context.Context, h *ReqUpload, uri string) (*RespUpload, error) {
 	tmpFile, err := os.CreateTemp("", "zfile-url-*.tmp")
 	if err != nil {
 		return nil, err
@@ -118,7 +120,7 @@ func UploadTransfer(ctx context.Context, h *ReqUpload, url string) (*RespUpload,
 	tmpPath := tmpFile.Name()
 	defer os.Remove(tmpPath)
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(uri)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +132,20 @@ func UploadTransfer(ctx context.Context, h *ReqUpload, url string) (*RespUpload,
 	file, err := os.Open(tmpPath)
 	if err != nil {
 		return nil, err
+	}
+
+	h.Name = path.Base(uri)
+	if path.Ext(h.Name) == "" {
+		buf := make([]byte, 512)
+		_, err = io.ReadFull(file, buf)
+		if err != nil && err != io.EOF && !errors.Is(err, io.ErrUnexpectedEOF) {
+			return nil, err
+		}
+		_, _ = file.Seek(0, io.SeekStart)
+		ext, _ := mime.ExtensionsByType(http.DetectContentType(buf))
+		if len(ext) > 0 {
+			h.Name = path.Base(uri) + ext[0]
+		}
 	}
 	return Upload(ctx, h, file)
 }
