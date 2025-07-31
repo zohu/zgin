@@ -75,6 +75,19 @@ func Upload(ctx context.Context, h *ReqUpload, rs io.ReadSeeker) (*RespUpload, e
 	md5 := hex.EncodeToString(hash.Sum(nil))
 
 	ext := path.Ext(h.Name)
+	if ext == "" {
+		buf := make([]byte, 512)
+		_, err := io.ReadFull(rs, buf)
+		if err != nil && err != io.EOF && !errors.Is(err, io.ErrUnexpectedEOF) {
+			return nil, err
+		}
+		_, _ = rs.Seek(0, io.SeekStart)
+		extensions, _ := mime.ExtensionsByType(http.DetectContentType(buf))
+		if len(extensions) > 0 {
+			ext = extensions[0]
+		}
+	}
+
 	name := opts.FullName(h.Path, h.Fid, ext)
 	if useDatabase {
 		// 检查文件是否已存在
@@ -133,20 +146,7 @@ func UploadTransfer(ctx context.Context, h *ReqUpload, uri string) (*RespUpload,
 	if err != nil {
 		return nil, err
 	}
-
-	h.Name = path.Base(uri)
-	if path.Ext(h.Name) == "" {
-		buf := make([]byte, 512)
-		_, err = io.ReadFull(file, buf)
-		if err != nil && err != io.EOF && !errors.Is(err, io.ErrUnexpectedEOF) {
-			return nil, err
-		}
-		_, _ = file.Seek(0, io.SeekStart)
-		ext, _ := mime.ExtensionsByType(http.DetectContentType(buf))
-		if len(ext) > 0 {
-			h.Name = path.Base(uri) + ext[0]
-		}
-	}
+	h.Name = uri
 	return Upload(ctx, h, file)
 }
 
