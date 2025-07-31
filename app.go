@@ -106,11 +106,15 @@ func (app *App) Listen() {
 
 func Bind[T any](fn func(*gin.Context, *T) *RespBean) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var params T
-		if err := c.ShouldBindJSON(&params); err != nil && !errors.Is(err, io.EOF) {
-			AbortHttpCode(c, http.StatusBadRequest, MessageParamInvalid.Resp(c).WithValidateErrs(c, params, err))
-		} else {
-			Abort(c, fn(c, &params))
+		if strings.Contains(c.ContentType(), gin.MIMEJSON) {
+			var params T
+			if err := c.ShouldBindJSON(&params); err != nil && !errors.Is(err, io.EOF) {
+				AbortHttpCode(c, http.StatusBadRequest, MessageParamInvalid.Resp(c).WithValidateErrs(c, params, err))
+			} else {
+				Abort(c, fn(c, &params))
+			}
+			return
 		}
+		Abort(c, fn(c, nil))
 	}
 }

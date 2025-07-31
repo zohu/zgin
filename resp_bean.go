@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/zohu/zgin/z18n"
+	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
 	"gorm.io/gorm"
 	"reflect"
@@ -81,6 +82,8 @@ func (r *RespBean) WithValidateErrs(c *gin.Context, h interface{}, errs error) *
 	var ves validator.ValidationErrors
 	if errors.As(errs, &ves) {
 		r.Notes = translateErrors(c, h, ves)
+	} else {
+		zlog.Warnf("params err: %v", errs)
 	}
 	return r
 }
