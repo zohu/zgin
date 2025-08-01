@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/h2non/filetype"
 	"github.com/zohu/zgin/zdb"
 	"github.com/zohu/zgin/zid"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
 	"gorm.io/gorm"
 	"io"
-	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -73,6 +73,7 @@ func Upload(ctx context.Context, h *ReqUpload, rs io.ReadSeeker) (*RespUpload, e
 		return nil, fmt.Errorf("failed to calculate file MD5: %w", err)
 	}
 	md5 := hex.EncodeToString(hash.Sum(nil))
+	_, _ = rs.Seek(0, io.SeekStart)
 
 	ext := path.Ext(h.Name)
 	if ext == "" {
@@ -81,11 +82,11 @@ func Upload(ctx context.Context, h *ReqUpload, rs io.ReadSeeker) (*RespUpload, e
 		if err != nil && err != io.EOF && !errors.Is(err, io.ErrUnexpectedEOF) {
 			return nil, err
 		}
-		_, _ = rs.Seek(0, io.SeekStart)
-		extensions, _ := mime.ExtensionsByType(http.DetectContentType(buf))
-		if len(extensions) > 0 {
-			ext = extensions[0]
+		kind, _ := filetype.Match(buf)
+		if kind != filetype.Unknown {
+			ext = "." + kind.Extension
 		}
+		_, _ = rs.Seek(0, io.SeekStart)
 	}
 
 	name := opts.FullName(h.Path, h.Fid, ext)
@@ -103,7 +104,6 @@ func Upload(ctx context.Context, h *ReqUpload, rs io.ReadSeeker) (*RespUpload, e
 		}
 	}
 	// 上传文件
-	_, _ = rs.Seek(0, io.SeekStart)
 	if err := svr.upload(ctx, rs, name, h.Progress); err != nil {
 		return nil, err
 	}
