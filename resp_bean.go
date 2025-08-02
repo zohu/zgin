@@ -52,8 +52,8 @@ type RespListBean[T any] struct {
 type Option[V any, E any] struct {
 	Label    string         `json:"label"`
 	Value    V              `json:"value"`
-	Extra    E              `json:"extra"`
-	Children []Option[V, E] `json:"children"`
+	Extra    E              `json:"extra,omitempty"`
+	Children []Option[V, E] `json:"children,omitempty"`
 }
 
 type MessageID string
