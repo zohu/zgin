@@ -49,11 +49,11 @@ type RespListBean[T any] struct {
 	Total int64 `json:"total" xml:"total"`
 	List  []T   `json:"list" xml:"list"`
 }
-type RespOption[V any, E any] struct {
-	Label    string             `json:"label"`
-	Value    V                  `json:"value"`
-	Extra    E                  `json:"extra"`
-	Children []RespOption[V, E] `json:"children"`
+type Option[V any, E any] struct {
+	Label    string         `json:"label"`
+	Value    V              `json:"value"`
+	Extra    E              `json:"extra"`
+	Children []Option[V, E] `json:"children"`
 }
 
 type MessageID string
