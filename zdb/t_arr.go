@@ -82,7 +82,6 @@ func (a *StringArray) ItemEqual(b *StringArray) bool {
 	copy(aCopy, a.StringArray)
 	bCopy := make([]string, len(b.StringArray))
 	copy(bCopy, b.StringArray)
-
 	sort.Strings(aCopy)
 	sort.Strings(bCopy)
 	return slices.Equal(aCopy, bCopy)

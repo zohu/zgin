@@ -15,6 +15,8 @@ func (m LoginMode) String() string {
 type Userinfo interface {
 	Userid() string
 	UserName() string
+	UserNickname() string
+	UserAvatar() string
 	Validate() zgin.MessageID
 }
 
