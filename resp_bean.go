@@ -78,7 +78,7 @@ func (m MessageID) Resp(c *gin.Context, kv ...map[string]string) *RespBean {
 	return resp
 }
 func (m MessageID) Error() error {
-	if m != MessageSuccess {
+	if m != "" && m != MessageSuccess {
 		return errors.New(string(m))
 	}
 	return nil
