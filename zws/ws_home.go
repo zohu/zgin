@@ -78,9 +78,29 @@ func (h *Home[T]) BroadcastWithFilter(msg *Message, filter func(ID string, data 
 	}
 	size := int(math.Min(float64(h.serves.Count()), float64(h.opts.HomeBroadcastPoolMaxSize)))
 	pool, _ := ants.NewPool(size)
+	defer pool.Release()
 	var wg sync.WaitGroup
 	h.serves.IterCb(func(ID string, c WebsocketServer[T]) {
 		if ok := filter(ID, c.GetData()); ok {
+			wg.Add(1)
+			_ = pool.Submit(func() {
+				_ = c.Send(msg)
+				wg.Done()
+			})
+		}
+	})
+	wg.Wait()
+}
+func (h *Home[T]) BroadcastCustomMessages(filter func(ID string, data T) *Message) {
+	if h.serves.Count() == 0 {
+		return
+	}
+	size := int(math.Min(float64(h.serves.Count()), float64(h.opts.HomeBroadcastPoolMaxSize)))
+	pool, _ := ants.NewPool(size)
+	defer pool.Release()
+	var wg sync.WaitGroup
+	h.serves.IterCb(func(ID string, c WebsocketServer[T]) {
+		if msg := filter(ID, c.GetData()); msg != nil {
 			wg.Add(1)
 			_ = pool.Submit(func() {
 				_ = c.Send(msg)
