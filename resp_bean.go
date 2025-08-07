@@ -77,6 +77,12 @@ func (m MessageID) Resp(c *gin.Context, kv ...map[string]string) *RespBean {
 	}
 	return resp
 }
+func (m MessageID) Error() error {
+	if m != MessageSuccess {
+		return errors.New(string(m))
+	}
+	return nil
+}
 
 func (r *RespBean) WithValidateErrs(c *gin.Context, h interface{}, errs error) *RespBean {
 	var ves validator.ValidationErrors
