@@ -81,10 +81,10 @@ func (m *Message) Map() map[string]interface{} {
 	return data
 }
 func (m *Message) Bind(dst interface{}) error {
-	if err := sonic.Unmarshal(m.data, &dst); err != nil {
+	if err := sonic.Unmarshal(m.data, dst); err != nil {
 		return err
 	}
-	return zgin.Validator().Struct(&dst)
+	return zgin.Validator().Struct(dst)
 }
 func (m *Message) String() string {
 	return string(m.data)
