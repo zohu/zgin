@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"github.com/bytedance/sonic"
+	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zbuff"
 	"io"
 	"strconv"
@@ -80,7 +81,10 @@ func (m *Message) Map() map[string]interface{} {
 	return data
 }
 func (m *Message) Bind(dst interface{}) error {
-	return sonic.Unmarshal(m.data, &dst)
+	if err := sonic.Unmarshal(m.data, &dst); err != nil {
+		return err
+	}
+	return zgin.Validator().Struct(&dst)
 }
 func (m *Message) String() string {
 	return string(m.data)
