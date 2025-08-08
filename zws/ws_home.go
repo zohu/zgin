@@ -12,8 +12,7 @@ type WebsocketHome[T any] interface {
 	Load(ID string) (WebsocketServer[T], bool)
 	LoadFunc(func(T) bool) (WebsocketServer[T], bool)
 	Remove(ID string)
-	Broadcast(msg *Message)
-	BroadcastWithFilter(msg *Message, filter func(ID string, data T) bool)
+	Broadcast(func(ID string, data T) *Message)
 	OnlineSize() int
 }
 
@@ -56,7 +55,7 @@ func (h *Home[T]) Remove(ID string) {
 		h.serves.Remove(ID)
 	}
 }
-func (h *Home[T]) Broadcast(msg *Message) {
+func (h *Home[T]) Broadcast(fn func(ID string, data T) *Message) {
 	if h.serves.Count() == 0 {
 		return
 	}
@@ -64,49 +63,15 @@ func (h *Home[T]) Broadcast(msg *Message) {
 	pool, _ := ants.NewPool(size)
 	var wg sync.WaitGroup
 	h.serves.IterCb(func(ID string, s WebsocketServer[T]) {
+		msg := fn(ID, s.GetData())
+		if msg == nil {
+			return
+		}
 		wg.Add(1)
 		_ = pool.Submit(func() {
 			_ = s.Send(msg)
 			wg.Done()
 		})
-	})
-	wg.Wait()
-}
-func (h *Home[T]) BroadcastWithFilter(msg *Message, filter func(ID string, data T) bool) {
-	if h.serves.Count() == 0 {
-		return
-	}
-	size := int(math.Min(float64(h.serves.Count()), float64(h.opts.HomeBroadcastPoolMaxSize)))
-	pool, _ := ants.NewPool(size)
-	defer pool.Release()
-	var wg sync.WaitGroup
-	h.serves.IterCb(func(ID string, c WebsocketServer[T]) {
-		if ok := filter(ID, c.GetData()); ok {
-			wg.Add(1)
-			_ = pool.Submit(func() {
-				_ = c.Send(msg)
-				wg.Done()
-			})
-		}
-	})
-	wg.Wait()
-}
-func (h *Home[T]) BroadcastCustomMessages(filter func(ID string, data T) *Message) {
-	if h.serves.Count() == 0 {
-		return
-	}
-	size := int(math.Min(float64(h.serves.Count()), float64(h.opts.HomeBroadcastPoolMaxSize)))
-	pool, _ := ants.NewPool(size)
-	defer pool.Release()
-	var wg sync.WaitGroup
-	h.serves.IterCb(func(ID string, c WebsocketServer[T]) {
-		if msg := filter(ID, c.GetData()); msg != nil {
-			wg.Add(1)
-			_ = pool.Submit(func() {
-				_ = c.Send(msg)
-				wg.Done()
-			})
-		}
 	})
 	wg.Wait()
 }
