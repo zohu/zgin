@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/avast/retry-go"
 	"github.com/redis/go-redis/v9"
 	"github.com/zohu/zgin/zlog"
 	"time"
@@ -54,16 +53,7 @@ func (t *Topic) Subscribe(ctx context.Context, handler func(string) error) {
 			time.Sleep(time.Second * 3)
 			continue
 		}
-		err = retry.Do(
-			func() error {
-				return handler(result[1])
-			},
-			retry.Attempts(3),
-			retry.Delay(time.Millisecond*100),
-			retry.DelayType(retry.FixedDelay),
-			retry.LastErrorOnly(true),
-		)
-		if err != nil {
+		if handler(result[1]) != nil {
 			zlog.Warnf("zch queue subscribe handler err: %v", err)
 			time.Sleep(time.Second * 3)
 			continue
