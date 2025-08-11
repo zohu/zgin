@@ -116,6 +116,25 @@ func Localize(c *gin.Context, ID string, kv ...map[string]string) string {
 	zlog.Warnf("翻译错误: %v", err)
 	return ID
 }
+func LocalizeWithTag(lang language.Tag, ID string, kv ...map[string]string) string {
+	if custom != nil && strings.HasPrefix(ID, zch.PrefixI18n.Key()) {
+		return custom(context.Background(), lang, ID)
+	}
+	localizer := NewLocalizer(lang)
+	data := map[string]string{}
+	if len(kv) > 0 {
+		data = kv[0]
+	}
+	message, err := localizer.Localize(&i18n.LocalizeConfig{
+		MessageID:    ID,
+		TemplateData: data,
+	})
+	if err == nil {
+		return message
+	}
+	zlog.Warnf("翻译错误: %v", err)
+	return ID
+}
 
 func AddLocalizer(lc Localizer) {
 	custom = lc
