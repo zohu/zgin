@@ -2,9 +2,10 @@ package zch
 
 import (
 	"context"
+	"time"
+
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
-	"time"
 )
 
 type L2 struct {
@@ -31,24 +32,12 @@ func NewL2(options *Options) *L2 {
 }
 
 func L() *L2 {
-	if l2 == nil {
-		zlog.Fatalf("please call NewL2 before using L")
-		return nil
-	}
 	return l2
 }
 func M() *Memory {
-	if l2 == nil {
-		zlog.Fatalf("please call NewL2 before using L")
-		return nil
-	}
 	return l2.m
 }
 func R() *Redis {
-	if l2 == nil {
-		zlog.Fatalf("please call NewL2 before using L")
-		return nil
-	}
 	return l2.r
 }
 
