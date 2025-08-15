@@ -1,9 +1,9 @@
 package zmath
 
 import (
-	"fmt"
-	"github.com/shopspring/decimal"
 	"strconv"
+
+	"github.com/shopspring/decimal"
 )
 
 type Chain struct {
@@ -55,5 +55,5 @@ func (c *Chain) String() string {
 	return strconv.FormatFloat(c.Float64(), 'f', -1, 64)
 }
 func (c *Chain) StringRound(n int32) string {
-	return fmt.Sprintf("%f", c.Round(n).Float64())
+	return strconv.FormatFloat(c.Round(n).Float64(), 'f', int(n), 64)
 }
