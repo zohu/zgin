@@ -115,6 +115,6 @@ func Bind[T any](fn func(*gin.Context, *T) *RespBean) gin.HandlerFunc {
 			}
 			return
 		}
-		Abort(c, fn(c, nil))
+		Abort(c, fn(c, new(T)))
 	}
 }

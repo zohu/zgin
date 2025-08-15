@@ -113,7 +113,6 @@ func Localize(c *gin.Context, ID string, kv ...map[string]string) string {
 	if err == nil {
 		return message
 	}
-	zlog.Warnf("翻译错误: %v", err)
 	return ID
 }
 func LocalizeWithTag(lang language.Tag, ID string, kv ...map[string]string) string {
@@ -132,7 +131,6 @@ func LocalizeWithTag(lang language.Tag, ID string, kv ...map[string]string) stri
 	if err == nil {
 		return message
 	}
-	zlog.Warnf("翻译错误: %v", err)
 	return ID
 }
 
