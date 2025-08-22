@@ -2,9 +2,10 @@ package zfile
 
 import (
 	"context"
+	"io"
+
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
-	"io"
 )
 
 type ossService struct {

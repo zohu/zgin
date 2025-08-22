@@ -2,11 +2,12 @@ package zdb
 
 import (
 	"database/sql/driver"
-	"github.com/bytedance/sonic"
-	"github.com/lib/pq"
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/bytedance/sonic"
+	"github.com/lib/pq"
 )
 
 type StringArray struct {
@@ -42,7 +43,6 @@ func (a *StringArray) UnmarshalJSON(data []byte) error {
 	a.StringArray = strs
 	return nil
 }
-
 func (a *StringArray) MarshalJSON() ([]byte, error) {
 	return sonic.Marshal([]string(a.StringArray))
 }

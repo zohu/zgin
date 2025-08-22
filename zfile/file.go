@@ -6,6 +6,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/h2non/filetype"
@@ -14,11 +20,6 @@ import (
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
 	"gorm.io/gorm"
-	"io"
-	"net/http"
-	"os"
-	"path"
-	"strings"
 )
 
 var opts *Options
@@ -122,6 +123,17 @@ func Upload(ctx context.Context, h *ReqUpload, rs io.ReadSeeker) (*RespUpload, e
 		Url:  opts.HTTPDomain(name),
 		Md5:  md5,
 	}, nil
+}
+
+func Delete(ctx context.Context, id, uri string) {
+	name := strings.Split(path.Base(uri), ".")[0]
+	id = zutil.FirstTruth(id, name)
+	var record ZfileRecord
+	zdb.NewDB(ctx).Where("fid = ?", id).First(&record)
+	if record.Name != "" {
+		_ = svr.delete(ctx, record.Name)
+	}
+	zdb.NewDB(ctx).Where("fid = ?", id).Delete(&ZfileRecord{})
 }
 
 func UploadTransfer(ctx context.Context, h *ReqUpload, uri string) (*RespUpload, error) {

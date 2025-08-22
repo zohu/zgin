@@ -3,15 +3,16 @@ package zmiddle
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"runtime/debug"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zbuff"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
-	"net/http"
-	"runtime/debug"
-	"strings"
-	"time"
 )
 
 type TimeoutOptions struct {
