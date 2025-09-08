@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/zohu/zgin/zlog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log/slog"
-	"time"
 )
 
 type Logger struct {

@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/hex"
 	"fmt"
+
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/ewkb"
 	"github.com/zohu/zgin/zutil"

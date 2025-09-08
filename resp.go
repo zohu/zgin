@@ -1,9 +1,10 @@
 package zgin
 
 import (
+	"net/http"
+
 	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func NewRespWithData(c *gin.Context, data any) *RespBean {
