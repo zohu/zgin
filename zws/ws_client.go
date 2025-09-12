@@ -3,11 +3,12 @@ package zws
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/cenkalti/backoff/v5"
 	"github.com/gorilla/websocket"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
-	"time"
 )
 
 type WebsocketClient interface {
@@ -183,7 +184,9 @@ func (c *Client) read(exit chan error) {
 			data := string(d)
 			if len(data) >= 5 {
 				msg := NewMessage().WithString(data[5:]).WithEvent(MessageCode(data[:4]))
-				go c.onMessage(msg)
+				if c.onMessage != nil {
+					go c.onMessage(msg)
+				}
 			}
 		default:
 			zlog.Warnf("unsupported message type: %d", t)

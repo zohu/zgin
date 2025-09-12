@@ -1,12 +1,13 @@
 package zws
 
 import (
-	"github.com/gorilla/websocket"
-	"github.com/zohu/zgin/zlog"
-	"github.com/zohu/zgin/zutil"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/zutil"
 )
 
 type WebsocketServer[T any] interface {
@@ -119,7 +120,7 @@ func (s *Serve[T]) read(exit chan error) {
 		}
 		switch t {
 		case websocket.PingMessage:
-			_ = s.Send(NewMessage())
+			_ = s.Conn.WriteMessage(websocket.PongMessage, nil)
 		case websocket.CloseMessage:
 			if s.onErr != nil {
 				go s.onErr(ErrClosed)
@@ -142,12 +143,18 @@ func (s *Serve[T]) read(exit chan error) {
 			}
 		case websocket.TextMessage:
 			data := string(d)
+			if data == "0000" { // 应用层心跳
+				_ = s.Conn.WriteMessage(websocket.TextMessage, []byte("0000"))
+				continue
+			}
 			if len(data) >= 5 {
 				msg := NewMessage().WithString(data[5:]).WithEvent(MessageCode(data[:4]))
 				if msg.Event() == MessagePing {
 					_ = s.Send(NewMessage())
 				} else {
-					go s.onMessage(msg)
+					if s.onMessage != nil {
+						go s.onMessage(msg)
+					}
 				}
 			}
 		default:

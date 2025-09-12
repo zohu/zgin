@@ -3,11 +3,12 @@ package zws
 import (
 	"bytes"
 	"compress/gzip"
+	"io"
+	"strconv"
+
 	"github.com/bytedance/sonic"
 	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zbuff"
-	"io"
-	"strconv"
 )
 
 type MessageCode string
@@ -36,7 +37,7 @@ type Message struct {
 }
 
 func NewMessage() *Message {
-	return &Message{event: MessagePing}
+	return &Message{event: MessagePing, mode: MessageModeText}
 }
 func (m *Message) WithEvent(event MessageCode) *Message {
 	m.event = event
