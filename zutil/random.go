@@ -26,18 +26,19 @@ type WeightedNode[T any] struct {
 	Weight int
 }
 
+// RandomWeighted
+// @Description: 加权随机
+// @param nodes
+// @return T
 func RandomWeighted[T any](nodes []WeightedNode[T]) T {
 	if len(nodes) == 0 {
 		return *new(T)
 	}
-
 	totalWeight := 0
 	for _, node := range nodes {
 		totalWeight += node.Weight
 	}
-
 	r := Random(1, totalWeight)
-
 	currentWeight := 0
 	for _, node := range nodes {
 		currentWeight += node.Weight
@@ -45,6 +46,5 @@ func RandomWeighted[T any](nodes []WeightedNode[T]) T {
 			return node.Value
 		}
 	}
-
 	return nodes[0].Value
 }
