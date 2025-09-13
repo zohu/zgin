@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/medama-io/go-useragent"
 	"github.com/zohu/zgin/zauth"
 	"github.com/zohu/zgin/zbuff"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
-	"io"
-	"net/http"
-	"strings"
-	"time"
 )
 
 type LoggerOptions struct {
@@ -74,6 +75,15 @@ func (l *LoggerItem) Print() {
 		mLogger.Infof("%s", buf.String())
 	} else {
 		mLogger.Warnf("%s", buf.String())
+	}
+}
+
+const NoLoggerToken = "NO_LOGGER"
+
+func NoLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(NoLoggerToken, 1)
+		c.Next()
 	}
 }
 
@@ -139,6 +149,10 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 		}
 
 		c.Next()
+
+		if _, ok := c.Get(NoLoggerToken); ok {
+			return
+		}
 
 		// data
 		{
