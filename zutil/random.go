@@ -20,3 +20,31 @@ func RandomStr(length int) string {
 	}
 	return string(b)
 }
+
+type WeightedNode[T any] struct {
+	Value  T
+	Weight int
+}
+
+func RandomWeighted[T any](nodes []WeightedNode[T]) T {
+	if len(nodes) == 0 {
+		return *new(T)
+	}
+
+	totalWeight := 0
+	for _, node := range nodes {
+		totalWeight += node.Weight
+	}
+
+	r := Random(1, totalWeight)
+
+	currentWeight := 0
+	for _, node := range nodes {
+		currentWeight += node.Weight
+		if r <= currentWeight {
+			return node.Value
+		}
+	}
+
+	return nodes[0].Value
+}
