@@ -24,6 +24,9 @@ func AbortHttpCode(c *gin.Context, code int, resp *RespBean) {
 	default:
 		c.JSON(code, resp)
 	}
+	if resp.Code != 1 {
+		c.Set("__CODE__", resp.Code)
+	}
 	c.Abort()
 }
 func AbortString(c *gin.Context, message string) {

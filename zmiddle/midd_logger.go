@@ -18,9 +18,10 @@ import (
 )
 
 type LoggerOptions struct {
-	MaxBody int      `yaml:"max_body"`
-	MaxData int      `yaml:"max_data"`
-	Ignore  []string `yaml:"ignore"`
+	MaxBody    int      `yaml:"max_body"`
+	MaxData    int      `yaml:"max_data"`
+	OnlyFailed bool     `yaml:"only_failed"`
+	Ignore     []string `yaml:"ignore"`
 }
 
 func (o *LoggerOptions) Validate() {
@@ -75,15 +76,6 @@ func (l *LoggerItem) Print() {
 		mLogger.Infof("%s", buf.String())
 	} else {
 		mLogger.Warnf("%s", buf.String())
-	}
-}
-
-const NoLoggerToken = "NO_LOGGER"
-
-func NoLogger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set(NoLoggerToken, 1)
-		c.Next()
 	}
 }
 
@@ -150,10 +142,6 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 
 		c.Next()
 
-		if _, ok := c.Get(NoLoggerToken); ok {
-			return
-		}
-
 		// data
 		{
 			data := blw.body.Bytes()
@@ -173,6 +161,13 @@ func NewLogger(options *LoggerOptions) gin.HandlerFunc {
 
 		item.Status = c.Writer.Status()
 		item.Latency = time.Since(start).Milliseconds()
+
+		if options.OnlyFailed {
+			if _, ok := c.Get("__CODE__"); ok || item.Status >= 400 {
+				item.Print()
+			}
+			return
+		}
 
 		item.Print()
 	}
