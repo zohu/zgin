@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zbuff"
+	"github.com/zohu/zgin/zlog"
 )
 
 type MessageCode string
@@ -44,7 +45,11 @@ func (m *Message) WithEvent(event MessageCode) *Message {
 	return m
 }
 func (m *Message) WithStruct(data interface{}) *Message {
-	m.data, _ = sonic.Marshal(data)
+	var err error
+	m.data, err = sonic.Marshal(data)
+	if err != nil {
+		zlog.Errorf("Message.WithStruct Marshal err: %v", err)
+	}
 	m.mode = MessageModeJson
 	return m
 }
@@ -78,7 +83,9 @@ func (m *Message) Mode() MessageMode {
 }
 func (m *Message) Map() map[string]interface{} {
 	var data map[string]interface{}
-	_ = sonic.Unmarshal(m.data, &data)
+	if err := sonic.Unmarshal(m.data, &data); err != nil {
+		zlog.Errorf("Message.Map Unmarshal error: %v", err)
+	}
 	return data
 }
 func (m *Message) Bind(dst interface{}) error {
@@ -91,7 +98,10 @@ func (m *Message) String() string {
 	return string(m.data)
 }
 func (m *Message) Int() int64 {
-	i, _ := strconv.ParseInt(string(m.data), 10, 64)
+	i, err := strconv.ParseInt(string(m.data), 10, 64)
+	if err != nil {
+		zlog.Errorf("Message.Int ParseInt error: %v", err)
+	}
 	return i
 }
 func (m *Message) MsgBytes() []byte {
@@ -112,7 +122,11 @@ func (m *Message) MsgGzip() []byte {
 	return buff.Clone()
 }
 func (m *Message) MsgUnGzip(msg []byte) *Message {
-	gz, _ := gzip.NewReader(bytes.NewBuffer(msg))
+	gz, err := gzip.NewReader(bytes.NewBuffer(msg))
+	if err != nil {
+		zlog.Errorf("Message.MsgUnGzip err: %v", err)
+		return m
+	}
 	defer gz.Close()
 	d, _ := io.ReadAll(gz)
 	str := string(d)
