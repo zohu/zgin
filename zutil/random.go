@@ -35,8 +35,11 @@ func RandomWeighted[T any](nodes []WeightedNode[T]) T {
 		return *new(T)
 	}
 	totalWeight := 0
-	for _, node := range nodes {
-		totalWeight += node.Weight
+	for i, node := range nodes {
+		if node.Weight <= 0 {
+			nodes[i].Weight = 1
+		}
+		totalWeight += nodes[i].Weight
 	}
 	r := Random(1, totalWeight)
 	currentWeight := 0
