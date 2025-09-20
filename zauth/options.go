@@ -1,9 +1,10 @@
 package zauth
 
 import (
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/zohu/zgin/zutil"
-	"time"
 )
 
 type Options struct {

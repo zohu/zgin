@@ -1,9 +1,10 @@
 package zauth
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin"
-	"time"
 )
 
 type LoginMode string
@@ -35,6 +36,7 @@ type ParamLoginPre struct {
 	Mode    LoginMode `json:"mode" binding:"required" message:"Login.Mode"`
 	Account string    `json:"account"`
 	Code    string    `json:"code"`
+	Captcha string    `json:"captcha"`
 }
 type ParamLoginPost struct {
 	Mode LoginMode `json:"mode" binding:"required" message:"Login.Mode"`

@@ -2,6 +2,9 @@ package zauth
 
 import (
 	"encoding/base64"
+	"net/http"
+	"strings"
+
 	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin"
@@ -9,8 +12,6 @@ import (
 	"github.com/zohu/zgin/zcpt"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
-	"net/http"
-	"strings"
 )
 
 const (
@@ -151,7 +152,7 @@ func ScanAuth[T Userinfo](c *gin.Context, auth *Authorization[T]) zgin.MessageID
 		return vali
 	}
 	// 刷新Token有效期
-	c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", false, false)
+	c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", true, true)
 	zch.R().Set(c.Request.Context(), vKey, uStr, options.Age)
 	return zgin.MessageSuccess
 }

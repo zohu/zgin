@@ -3,6 +3,8 @@ package zauth
 import (
 	"encoding/base64"
 	"fmt"
+	"time"
+
 	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin"
@@ -12,7 +14,6 @@ import (
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zmap"
 	"github.com/zohu/zgin/zutil"
-	"time"
 )
 
 var logins = zmap.NewStringer[LoginMode, LoginEntity]()
@@ -81,7 +82,7 @@ func activeToken(c *gin.Context, user Userinfo) *zgin.RespBean {
 	tk := fmt.Sprintf("%s##%s##%s##%s##%d", zid.NextIdShort(), zcpt.Md5(c.Request.UserAgent()), c.ClientIP(), user.Userid(), time.Now().Unix())
 	d, _ := zcpt.AesEncryptCBC([]byte(tk), []byte(AESKey))
 	token := base64.StdEncoding.EncodeToString(d)
-	c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", false, false)
+	c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", true, true)
 	userStr, _ := sonic.MarshalString(&Authorization[Userinfo]{Session: zcpt.Md5(token), Value: user})
 	zch.R().Set(c.Request.Context(), vKey, userStr, options.Age)
 	return zgin.MessageSuccess.Resp(c).WithData(&Tokens{
