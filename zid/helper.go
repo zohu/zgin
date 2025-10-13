@@ -2,17 +2,19 @@ package zid
 
 import (
 	"strconv"
-	"sync"
 	"time"
 )
 
-var singletonMutex sync.Mutex
 var idGenerator *DefaultIdGenerator
 
 func init() {
-	singletonMutex.Lock()
-	idGenerator = NewDefaultIdGenerator(nil)
-	singletonMutex.Unlock()
+	if idGenerator == nil {
+		idGenerator = NewDefaultIdGenerator(nil)
+	}
+}
+
+func GeneratorWithOptions(options *Options) {
+	idGenerator = NewDefaultIdGenerator(options)
 }
 
 // NextId
@@ -26,7 +28,7 @@ func NextId() int64 {
 // @Description: 10进制ID字符串
 // @return string
 func NextIdStr() string {
-	return idGenerator.NextIdStr()
+	return strconv.FormatInt(NextId(), 10)
 }
 
 // NextIdHex
@@ -49,4 +51,30 @@ func NextIdShort() string {
 // @return time.Time
 func ExtractTime(id int64) time.Time {
 	return idGenerator.ExtractTime(id)
+}
+
+func ExtractTimeHex(hex string) time.Time {
+	id, _ := strconv.ParseInt(hex, 16, 64)
+	return idGenerator.ExtractTime(id)
+}
+
+func ExtractTimeShort(short string) time.Time {
+	id, _ := strconv.ParseInt(short, 36, 64)
+	return idGenerator.ExtractTime(id)
+}
+
+// ExtractWorkerId
+// @Description: 提取工作节点ID
+// @param id
+// @return int64
+func ExtractWorkerId(id int64) int64 {
+	return idGenerator.ExtractWorkerId(id)
+}
+func ExtractWorkerIdHex(hex string) int64 {
+	id, _ := strconv.ParseInt(hex, 16, 64)
+	return idGenerator.ExtractWorkerId(id)
+}
+func ExtractWorkerIdShort(short string) int64 {
+	id, _ := strconv.ParseInt(short, 36, 64)
+	return idGenerator.ExtractWorkerId(id)
 }

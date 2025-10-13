@@ -2,42 +2,36 @@ package zid
 
 import (
 	"context"
-	"github.com/zohu/zgin/zch"
+	"time"
+
+	"github.com/redis/go-redis/v9"
 	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
-	"time"
 )
 
-func AutoWorkerId(r *zch.Redis, options *Options) {
+func AutoWorkerId(r redis.UniversalClient, options *Options) {
 	options = zutil.FirstTruth(options, new(Options))
 	options.Validate()
 
-	ctx := context.TODO()
-	options.WorkerId = findIdx(ctx, r, options, 0)
+	options.WorkerId = findIdx(r, options)
+	GeneratorWithOptions(options)
 
-	singletonMutex.Lock()
-	idGenerator = NewDefaultIdGenerator(options)
-	singletonMutex.Unlock()
-
-	go alive(ctx, r, options.prefix(options.WorkerId))
+	go alive(r, options.prefix(options.WorkerId))
 	zlog.Infof("init zid success, workerid=%d", options.WorkerId)
 }
 
-func findIdx(ctx context.Context, r *zch.Redis, ops *Options, retry uint16) uint16 {
-	if retry > ops.maxWorkerIdNumber() {
-		zlog.Fatalf("all worker id [0-%d] are occupied, please extend WorkerIdBitLength", retry-1)
+func findIdx(r redis.UniversalClient, ops *Options) int64 {
+	mw := ops.MaxWorkerIdNumber()
+	for i := int64(0); i <= mw; i++ {
+		if r.SetNX(context.Background(), ops.prefix(i), "occupied", time.Second*60).Val() {
+			return i
+		}
 	}
-	ok, err := r.SetNX(ctx, ops.prefix(retry), "occupied", time.Second*60).Result()
-	if ok {
-		return retry
-	}
-	if err != nil {
-		zlog.Warnf("find worker id error: %v", err)
-	}
-	return findIdx(ctx, r, ops, retry+1)
+	zlog.Fatalf("all worker id [0-%d] are occupied, please extend WorkerIdBitLength", mw)
+	return 0
 }
-func alive(ctx context.Context, r *zch.Redis, prefix string) {
+func alive(r redis.UniversalClient, prefix string) {
 	for range time.NewTicker(time.Second * 40).C {
-		r.Set(ctx, prefix, "occupied", time.Second*60)
+		r.Set(context.Background(), prefix, "occupied", time.Second*60)
 	}
 }

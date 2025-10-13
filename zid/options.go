@@ -2,22 +2,22 @@ package zid
 
 import (
 	"fmt"
-	"github.com/zohu/zgin/zlog"
-	"github.com/zohu/zgin/zutil"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/zutil"
 )
 
 type ISnowWorker interface {
 	NextId() int64
-	NextIdStr() string
 	ExtractTime(int64) time.Time
+	ExtractWorkerId(id int64) int64
 }
 type Options struct {
-	Method             uint16 // 雪花计算方法,（1-漂移算法|2-传统算法），默认1
 	BaseTime           int64  // 基础时间（ms单位），不能超过当前系统时间
-	WorkerId           uint16 // 机器码，必须由外部设定，最大值 2^WorkerIdBitLength-1
+	WorkerId           int64  // 机器码，必须由外部设定，最大值 2^WorkerIdBitLength-1
 	WorkerIdAutoPrefix string // 机器码前缀，默认值"zid"
 	WorkerIdBitLength  byte   // 机器码位长，默认值6，取值范围 [1, 15]（要求：序列数位长+机器码位长不超过22）
 	SeqBitLength       byte   // 序列数位长，默认值6，取值范围 [3, 21]（要求：序列数位长+机器码位长不超过22）
@@ -27,8 +27,8 @@ type Options struct {
 }
 
 func (o *Options) Validate() {
-	o.Method = zutil.FirstTruth(o.Method, 1)
-	o.BaseTime = zutil.FirstTruth(o.BaseTime, 1735660800000)
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+	o.BaseTime = zutil.FirstTruth(o.BaseTime, baseTime)
 	o.WorkerIdAutoPrefix = zutil.FirstTruth(o.WorkerIdAutoPrefix, "zid")
 	o.WorkerIdBitLength = zutil.FirstTruth(o.WorkerIdBitLength, 6)
 	o.SeqBitLength = zutil.FirstTruth(o.SeqBitLength, 6)
@@ -36,7 +36,7 @@ func (o *Options) Validate() {
 	o.MinSeqNumber = zutil.FirstTruth(o.MinSeqNumber, 5)
 	o.TopOverCostCount = zutil.FirstTruth(o.TopOverCostCount, 2000)
 
-	if o.BaseTime < 1735660800000 || o.BaseTime > time.Now().UnixNano()/1e6 {
+	if o.BaseTime < baseTime || o.BaseTime > time.Now().UnixMilli() {
 		zlog.Fatalf("BaseTime range:[2025-01-01 ~ now]")
 	}
 	if o.WorkerIdBitLength < 1 || o.WorkerIdBitLength > 21 {
@@ -45,7 +45,7 @@ func (o *Options) Validate() {
 	if o.WorkerIdBitLength+o.SeqBitLength > 22 {
 		zlog.Fatalf("WorkerIdBitLength + SeqBitLength <= 22")
 	}
-	maxWorkerIdNumber := o.maxWorkerIdNumber()
+	maxWorkerIdNumber := o.MaxWorkerIdNumber()
 	if o.WorkerId < 0 || o.WorkerId > maxWorkerIdNumber {
 		zlog.Fatalf("WorkerId range:[0, " + strconv.FormatUint(uint64(maxWorkerIdNumber), 10) + "]")
 	}
@@ -63,12 +63,12 @@ func (o *Options) Validate() {
 		zlog.Fatalf("TopOverCostCount range:[0, 10000]")
 	}
 }
-func (o *Options) maxWorkerIdNumber() uint16 {
-	return zutil.FirstTruth(uint16(1<<o.WorkerIdBitLength)-1, 63)
+func (o *Options) MaxWorkerIdNumber() int64 {
+	return zutil.FirstTruth(int64(1<<o.WorkerIdBitLength)-1, 63)
 }
 func (o *Options) maxSeqNumber() uint32 {
 	return zutil.FirstTruth(uint32(1<<o.SeqBitLength)-1, 63)
 }
-func (o *Options) prefix(wid uint16) string {
+func (o *Options) prefix(wid int64) string {
 	return fmt.Sprintf("%s:%d", strings.TrimSuffix(o.WorkerIdAutoPrefix, ":"), wid)
 }

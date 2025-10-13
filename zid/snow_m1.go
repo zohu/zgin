@@ -1,14 +1,13 @@
 package zid
 
 import (
-	"strconv"
 	"sync"
 	"time"
 )
 
 type SnowWorkerM1 struct {
 	baseTime          int64  // 基础时间
-	workerId          uint16 // 机器码
+	workerId          int64  // 机器码
 	workerIdBitLength byte   // 机器码位长
 	seqBitLength      byte   // 自增序列数位长
 	maxSeqNumber      uint32 // 最大序列数（含）
@@ -135,9 +134,11 @@ func (m1 *SnowWorkerM1) NextId() int64 {
 		return m1.NextNormalId()
 	}
 }
-func (m1 *SnowWorkerM1) NextIdStr() string {
-	return strconv.FormatInt(m1.NextId(), 10)
-}
 func (m1 *SnowWorkerM1) ExtractTime(id int64) time.Time {
 	return time.UnixMilli(id>>(m1.workerIdBitLength+m1.seqBitLength) + m1.baseTime)
+}
+func (m1 *SnowWorkerM1) ExtractWorkerId(id int64) int64 {
+	id >>= m1.seqBitLength
+	mask := int64((1 << m1.workerIdBitLength) - 1)
+	return id & mask
 }
