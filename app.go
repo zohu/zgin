@@ -3,13 +3,6 @@ package zgin
 import (
 	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
-	"github.com/zohu/zgin/zlog"
-	"github.com/zohu/zgin/zutil"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"io"
 	"net/http"
 	"os"
@@ -17,6 +10,14 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
+	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zgin/zutil"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 func init() {
