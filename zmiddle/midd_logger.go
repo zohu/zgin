@@ -30,6 +30,7 @@ func (o *LoggerOptions) Validate() {
 }
 
 var mLogger = zlog.NewZLogger(&zlog.Options{
+	Color: zlog.ColorAlways,
 	Stack: zlog.StackOff,
 })
 

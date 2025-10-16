@@ -20,6 +20,8 @@ type Logger struct {
 
 func NewLogger(o *Options) *Logger {
 	options := &zlog.Options{
+		Stack:  zlog.StackOff,
+		Color:  zlog.ColorAlways,
 		Writer: zlog.SafeWriter(),
 	}
 	if o.Debug != nil && *o.Debug {

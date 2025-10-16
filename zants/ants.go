@@ -32,7 +32,7 @@ func New(options *Options) {
 	if err := options.Validate(); err != nil {
 		zlog.Fatalf("options is invalid: %v", err)
 	}
-	p, err := ants.NewMultiPool(options.MultiSize, options.PoolSize, ants.LeastTasks, ants.WithLogger(zlog.NewZLogger(nil)))
+	p, err := ants.NewMultiPool(options.MultiSize, options.PoolSize, ants.LeastTasks, ants.WithLogger(zlog.NewZLogger(&zlog.Options{Stack: zlog.StackOff})))
 	if err != nil {
 		zlog.Fatalf("new multi pool error: %v", err)
 	}
