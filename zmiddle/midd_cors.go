@@ -1,11 +1,12 @@
 package zmiddle
 
 import (
+	"net/http"
+	"slices"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zohu/zgin/zutil"
 	"github.com/zohu/zlog"
-	"net/http"
-	"slices"
 )
 
 type CorsOptions struct {

@@ -30,7 +30,7 @@ func (o *LoggerOptions) Validate() {
 }
 
 var mLogger = zlog.NewZLogger(&zlog.Options{
-	SkipCallers: -1,
+	Stack: zlog.StackOff,
 })
 
 /**
