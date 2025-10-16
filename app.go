@@ -14,8 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zlog"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )

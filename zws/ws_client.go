@@ -7,8 +7,8 @@ import (
 
 	"github.com/cenkalti/backoff/v5"
 	"github.com/gorilla/websocket"
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zlog"
 )
 
 type WebsocketClient interface {

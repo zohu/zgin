@@ -16,9 +16,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/h2non/filetype"
 	"github.com/zohu/zgin/zdb"
-	"github.com/zohu/zgin/zid"
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zid"
+	"github.com/zohu/zlog"
 	"gorm.io/gorm"
 )
 
@@ -67,7 +67,7 @@ func Upload(ctx context.Context, h *ReqUpload, rs io.ReadSeeker) (*RespUpload, e
 	if err := validator.New().Struct(h); err != nil {
 		return nil, err
 	}
-	h.Fid = zutil.FirstTruth(h.Fid, zid.NextIdShort())
+	h.Fid = zutil.FirstTruth(h.Fid, zid.NextBase36())
 	// 计算文件哈希
 	hash := sha256.New()
 	if _, err := io.Copy(hash, rs); err != nil {

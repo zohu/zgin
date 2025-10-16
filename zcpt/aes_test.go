@@ -1,6 +1,8 @@
 package zcpt
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestAes(t *testing.T) {
 	text := "hello world"

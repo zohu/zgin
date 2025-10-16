@@ -2,11 +2,12 @@ package zauth
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"github.com/zohu/zgin"
-	"github.com/zohu/zgin/zlog"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/zohu/zgin"
+	"github.com/zohu/zlog"
 )
 
 func Action(actions ...string) gin.HandlerFunc {

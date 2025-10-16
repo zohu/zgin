@@ -9,7 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zbuff"
-	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zlog"
 )
 
 type MessageCode string

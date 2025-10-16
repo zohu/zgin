@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zlog"
 )
 
 type L2 struct {

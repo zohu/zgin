@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zlog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -19,7 +19,9 @@ type Logger struct {
 }
 
 func NewLogger(o *Options) *Logger {
-	options := &zlog.Options{SkipCallers: -1}
+	options := &zlog.Options{
+		Writer: zlog.SafeWriter(),
+	}
 	if o.Debug != nil && *o.Debug {
 		options.Level = slog.LevelDebug
 	}

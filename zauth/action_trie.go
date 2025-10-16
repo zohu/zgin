@@ -2,10 +2,11 @@ package zauth
 
 import (
 	"context"
-	"github.com/bytedance/sonic"
-	"github.com/zohu/zgin/zch"
 	"sort"
 	"strings"
+
+	"github.com/bytedance/sonic"
+	"github.com/zohu/zgin/zch"
 )
 
 func LoadPermission(ctx context.Context, uid string) *PermTrie {

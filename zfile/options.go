@@ -3,11 +3,12 @@ package zfile
 import (
 	"context"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/dromara/carbon/v2"
 	"github.com/go-playground/validator/v10"
 	"github.com/zohu/zgin/zutil"
-	"io"
-	"strings"
 )
 
 type ProviderType string

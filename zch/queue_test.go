@@ -2,7 +2,7 @@ package zch
 
 import (
 	"context"
-	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zlog"
 	"testing"
 	"time"
 )

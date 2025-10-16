@@ -13,8 +13,8 @@ import (
 	"github.com/medama-io/go-useragent"
 	"github.com/zohu/zgin/zauth"
 	"github.com/zohu/zgin/zbuff"
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zlog"
 )
 
 type LoggerOptions struct {

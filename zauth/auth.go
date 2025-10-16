@@ -10,8 +10,8 @@ import (
 	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zch"
 	"github.com/zohu/zgin/zcpt"
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zlog"
 )
 
 const (

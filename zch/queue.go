@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zlog"
 	"time"
 )
 

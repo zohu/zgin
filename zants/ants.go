@@ -3,8 +3,8 @@ package zants
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/panjf2000/ants/v2"
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zlog"
 )
 
 type Options struct {

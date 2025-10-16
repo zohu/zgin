@@ -3,7 +3,7 @@ package zauth
 import (
 	recaptcha "cloud.google.com/go/recaptchaenterprise/v2/apiv1"
 	recaptchapb "cloud.google.com/go/recaptchaenterprise/v2/apiv1/recaptchaenterprisepb"
-	"github.com/zohu/zgin/zlog"
+	"github.com/zohu/zlog"
 
 	"context"
 	"fmt"

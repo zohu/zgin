@@ -10,10 +10,10 @@ import (
 	"github.com/zohu/zgin"
 	"github.com/zohu/zgin/zch"
 	"github.com/zohu/zgin/zcpt"
-	"github.com/zohu/zgin/zid"
-	"github.com/zohu/zgin/zlog"
 	"github.com/zohu/zgin/zmap"
 	"github.com/zohu/zgin/zutil"
+	"github.com/zohu/zid"
+	"github.com/zohu/zlog"
 )
 
 var logins = zmap.NewStringer[LoginMode, LoginEntity]()
@@ -29,7 +29,7 @@ func LoginRouteRegister(r *gin.RouterGroup) {
 }
 
 func preLogin(c *gin.Context, h *ParamLoginPre) *zgin.RespBean {
-	id := zid.NextIdHex()
+	id := zid.NextHex()
 	if entity, ok := logins.Get(h.Mode); ok {
 		resp, err := entity.PreLogin(c, id, h)
 		if err != nil {
@@ -79,7 +79,7 @@ func activeToken(c *gin.Context, user Userinfo) *zgin.RespBean {
 		zch.R().Del(c.Request.Context(), vKey)
 	}
 	// 生成登录态
-	tk := fmt.Sprintf("%s##%s##%s##%s##%d", zid.NextIdShort(), zcpt.Md5(c.Request.UserAgent()), c.ClientIP(), user.Userid(), time.Now().Unix())
+	tk := fmt.Sprintf("%s##%s##%s##%s##%d", zid.NextBase36(), zcpt.Md5(c.Request.UserAgent()), c.ClientIP(), user.Userid(), time.Now().Unix())
 	d, _ := zcpt.AesEncryptCBC([]byte(tk), []byte(AESKey))
 	token := base64.StdEncoding.EncodeToString(d)
 	c.SetCookie("auth", token, int(options.Age.Seconds()), "", "", true, true)
